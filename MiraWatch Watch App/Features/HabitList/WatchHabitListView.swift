@@ -3,18 +3,16 @@ import SwiftData
 
 /// Main watch screen: today's habits split into unlogged and logged sections
 struct WatchHabitListView: View {
-    @Environment(\.dependencies) private var dependencies
-    @State private var habits: [Habit] = []
-    @State private var errorMessage: String?
+    @Query(filter: #Predicate<Habit> { !$0.isArchived },
+           sort: \Habit.displayOrder)
+    private var habits: [Habit]
 
     private var unloggedHabits: [Habit] {
         habits.filter { !$0.isLoggedToday }
-            .sorted { $0.displayOrder < $1.displayOrder }
     }
 
     private var loggedHabits: [Habit] {
         habits.filter { $0.isLoggedToday }
-            .sorted { $0.displayOrder < $1.displayOrder }
     }
 
     var body: some View {
@@ -54,24 +52,11 @@ struct WatchHabitListView: View {
             .navigationDestination(for: WatchDestination.self) { destination in
                 switch destination {
                 case .logFlow(let habit):
-                    WatchLogFlow(habit: habit, onComplete: {
-                        loadHabits()
-                    })
+                    WatchLogFlow(habit: habit)
                 case .entryList(let habit):
                     WatchEntryListView(habit: habit)
                 }
             }
-        }
-        .onAppear {
-            loadHabits()
-        }
-    }
-
-    private func loadHabits() {
-        do {
-            habits = try dependencies.habitService.getActiveHabits()
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 }

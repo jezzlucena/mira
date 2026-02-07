@@ -18,14 +18,10 @@ struct WatchHabitRow: View {
                     .lineLimit(1)
 
                 if isLogged, let latestEntry = habit.todayEntries.sorted(by: { $0.timestamp > $1.timestamp }).first {
-                    HStack(spacing: 4) {
-                        WatchSentimentBadge(sentiment: latestEntry.sentiment)
-
-                        if let value = latestEntry.value, let unitLabel = habit.trackingStyle.unitLabel {
-                            Text("\(Int(value)) \(unitLabel)")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
+                    if let value = latestEntry.value, let unitLabel = habit.trackingStyle.unitLabel {
+                        Text("\(Int(value)) \(unitLabel)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
                 } else {
                     Text("Not logged")
@@ -36,10 +32,9 @@ struct WatchHabitRow: View {
 
             Spacer()
 
-            if isLogged {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.green)
+            if isLogged, let latestEntry = habit.todayEntries.sorted(by: { $0.timestamp > $1.timestamp }).first {
+                Text(sentimentEmojiFor(latestEntry.sentiment))
+                    .font(.title3)
             }
         }
         .accessibilityElement(children: .combine)

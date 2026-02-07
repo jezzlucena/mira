@@ -266,7 +266,7 @@ public struct ExportHabit: Codable {
         self.displayOrder = habit.displayOrder
         self.createdAt = habit.createdAt
         self.updatedAt = habit.updatedAt
-        self.entries = habit.entries.map { ExportEntry(from: $0) }
+        self.entries = habit.allEntries.map { ExportEntry(from: $0) }
     }
 }
 

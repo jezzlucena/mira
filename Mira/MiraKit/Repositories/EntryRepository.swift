@@ -35,7 +35,8 @@ public final class EntryRepository: ObservableObject {
         )
 
         modelContext.insert(entry)
-        habit.entries.append(entry)
+        if habit.entries == nil { habit.entries = [] }
+        habit.entries?.append(entry)
         habit.updatedAt = Date()
         try modelContext.save()
 

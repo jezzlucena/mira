@@ -6,22 +6,22 @@ import SwiftData
 @Model
 public final class SentimentRecord {
     /// Unique identifier
-    public var id: UUID
+    public var id: UUID = UUID()
 
     /// When this sentiment was recorded
-    public var timestamp: Date
+    public var timestamp: Date = Date()
 
     /// Sentiment score on 1-6 scale (same as HabitEntry)
-    public var sentiment: Int
+    public var sentiment: Int = 4
 
     /// Optional note for context
     public var note: String?
 
     /// Context tags (e.g., "morning", "after work", "tired")
-    public var contextTags: [String]
+    public var contextTags: [String] = []
 
     /// Whether this record is pending cloud sync
-    public var pendingSync: Bool
+    public var pendingSync: Bool = false
 
     public init(
         id: UUID = UUID(),

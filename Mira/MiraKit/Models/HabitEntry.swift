@@ -6,18 +6,18 @@ import SwiftData
 @Model
 public final class HabitEntry {
     /// Unique identifier
-    public var id: UUID
+    public var id: UUID = UUID()
 
     /// The habit this entry belongs to
     public var habit: Habit?
 
     /// When this entry was logged
-    public var timestamp: Date
+    public var timestamp: Date = Date()
 
     /// MANDATORY sentiment score on 1-6 scale
     /// 1 = Very low mood, 6 = Very high mood
     /// Using 1-6 (even number) to avoid neutral middle option - forces reflection
-    public var sentiment: Int
+    public var sentiment: Int = 4
 
     /// Optional value for duration/quantity tracking styles
     /// For occurrence style, this is nil
@@ -27,13 +27,13 @@ public final class HabitEntry {
     public var note: String?
 
     /// Context tags for this specific entry (e.g., "stressed", "social", "alone")
-    public var contextTags: [String]
+    public var contextTags: [String] = []
 
     /// Whether this entry is pending cloud sync
-    public var pendingSync: Bool
+    public var pendingSync: Bool = false
 
     /// Creation timestamp (for sync conflict resolution)
-    public var createdAt: Date
+    public var createdAt: Date = Date()
 
     public init(
         id: UUID = UUID(),

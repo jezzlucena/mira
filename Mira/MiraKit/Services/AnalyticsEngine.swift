@@ -107,7 +107,7 @@ public final class AnalyticsEngine: ObservableObject {
         let startDate = calendar.date(byAdding: .day, value: -days, to: Date())!
 
         // Get entries for this habit
-        let habitEntries = habit.entries.filter { $0.timestamp >= startDate }
+        let habitEntries = habit.allEntries.filter { $0.timestamp >= startDate }
 
         // Get all sentiment data for comparison
         let allEntries = try fetchAllEntries(forLastDays: days)
@@ -327,7 +327,7 @@ public final class AnalyticsEngine: ObservableObject {
         var grid: [[HeatmapCell]] = []
 
         // Build entries lookup for efficiency
-        let entries = habit.entries.filter { $0.timestamp >= weekStart }
+        let entries = habit.allEntries.filter { $0.timestamp >= weekStart }
         var entriesByDay: [Date: [HabitEntry]] = [:]
         for entry in entries {
             let day = calendar.startOfDay(for: entry.timestamp)
@@ -392,7 +392,7 @@ public final class AnalyticsEngine: ObservableObject {
         }
 
         // Identify days where the specific habit was logged
-        let habitEntries = habit.entries.filter { $0.timestamp >= startDate }
+        let habitEntries = habit.allEntries.filter { $0.timestamp >= startDate }
         var habitDaySet: Set<Date> = []
         for entry in habitEntries {
             habitDaySet.insert(calendar.startOfDay(for: entry.timestamp))

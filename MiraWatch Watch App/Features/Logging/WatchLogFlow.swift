@@ -6,7 +6,6 @@ import SwiftUI
 /// Step 3: Confirmation (auto-dismiss)
 struct WatchLogFlow: View {
     let habit: Habit
-    var onComplete: (() -> Void)?
 
     @Environment(\.dependencies) private var dependencies
     @Environment(\.dismiss) private var dismiss
@@ -43,7 +42,6 @@ struct WatchLogFlow: View {
 
             case .confirmation:
                 WatchConfirmationView(habitName: habit.name) {
-                    onComplete?()
                     dismiss()
                 }
 

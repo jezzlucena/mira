@@ -6,41 +6,41 @@ import SwiftData
 @Model
 public final class Habit {
     /// Unique identifier
-    public var id: UUID
+    public var id: UUID = UUID()
 
     /// User-defined name for the habit
-    public var name: String
+    public var name: String = ""
 
     /// SF Symbol icon name
-    public var icon: String
+    public var icon: String = "circle.fill"
 
     /// Hex color string for visual identification
-    public var colorHex: String
+    public var colorHex: String = "#007AFF"
 
     /// How this habit is tracked
-    public var trackingStyleRaw: String
+    public var trackingStyleRaw: String = TrackingStyle.occurrence.rawValue
 
     /// User-defined tags for categorization
-    public var tags: [String]
+    public var tags: [String] = []
 
     /// All entries logged for this habit
     @Relationship(deleteRule: .cascade, inverse: \HabitEntry.habit)
-    public var entries: [HabitEntry]
+    public var entries: [HabitEntry]?
 
     /// If true, this habit will never sync to cloud (for sensitive habits)
-    public var isLocalOnly: Bool
+    public var isLocalOnly: Bool = false
 
     /// Whether the habit is archived (hidden from main views but data preserved)
-    public var isArchived: Bool
+    public var isArchived: Bool = false
 
     /// Creation timestamp
-    public var createdAt: Date
+    public var createdAt: Date = Date()
 
     /// Last modification timestamp
-    public var updatedAt: Date
+    public var updatedAt: Date = Date()
 
     /// Order for display (user can reorder)
-    public var displayOrder: Int
+    public var displayOrder: Int = 0
 
     public var trackingStyle: TrackingStyle {
         get { TrackingStyle(rawValue: trackingStyleRaw) ?? .occurrence }
@@ -64,7 +64,7 @@ public final class Habit {
         self.colorHex = colorHex
         self.trackingStyleRaw = trackingStyle.rawValue
         self.tags = tags
-        self.entries = []
+        self.entries = nil
         self.isLocalOnly = isLocalOnly
         self.isArchived = isArchived
         self.createdAt = Date()
@@ -76,11 +76,16 @@ public final class Habit {
 // MARK: - Convenience Extensions
 
 extension Habit {
+    /// All entries, unwrapped (CloudKit requires the relationship be optional)
+    public var allEntries: [HabitEntry] {
+        entries ?? []
+    }
+
     /// Returns entries for today
     public var todayEntries: [HabitEntry] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        return entries.filter { calendar.isDate($0.timestamp, inSameDayAs: today) }
+        return allEntries.filter { calendar.isDate($0.timestamp, inSameDayAs: today) }
     }
 
     /// Whether the habit has been logged today
@@ -90,14 +95,14 @@ extension Habit {
 
     /// Total count of entries
     public var totalEntryCount: Int {
-        entries.count
+        allEntries.count
     }
 
     /// Average sentiment across all entries
     public var averageSentiment: Double? {
-        guard !entries.isEmpty else { return nil }
-        let total = entries.reduce(0) { $0 + $1.sentiment }
-        return Double(total) / Double(entries.count)
+        guard !allEntries.isEmpty else { return nil }
+        let total = allEntries.reduce(0) { $0 + $1.sentiment }
+        return Double(total) / Double(allEntries.count)
     }
 
     /// Entries from the last N days
@@ -106,7 +111,7 @@ extension Habit {
         guard let startDate = calendar.date(byAdding: .day, value: -days, to: Date()) else {
             return []
         }
-        return entries.filter { $0.timestamp >= startDate }
+        return allEntries.filter { $0.timestamp >= startDate }
     }
 }
 

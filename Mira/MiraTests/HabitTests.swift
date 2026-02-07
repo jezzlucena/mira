@@ -14,7 +14,7 @@ struct HabitTests {
         #expect(habit.colorHex == "#007AFF")
         #expect(habit.trackingStyle == .occurrence)
         #expect(habit.tags.isEmpty)
-        #expect(habit.entries.isEmpty)
+        #expect(habit.allEntries.isEmpty)
         #expect(habit.isLocalOnly == false)
         #expect(habit.isArchived == false)
     }

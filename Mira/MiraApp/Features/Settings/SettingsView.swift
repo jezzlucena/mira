@@ -15,6 +15,8 @@ struct SettingsView: View {
     @State private var showImportResult = false
     @State private var errorMessage: String?
     @State private var showError = false
+    @State private var iCloudSyncEnabled: Bool = UserDefaults.standard.bool(forKey: "iCloudSyncEnabled")
+    @State private var showSyncRestartAlert = false
 
     var body: some View {
         NavigationStack {
@@ -79,6 +81,11 @@ struct SettingsView: View {
             } message: {
                 Text("This will permanently delete all your habits, entries, and preferences. This cannot be undone.")
             }
+            .alert("Restart Required", isPresented: $showSyncRestartAlert) {
+                Button("OK") {}
+            } message: {
+                Text("Please restart Mira for the iCloud sync change to take effect.")
+            }
         }
     }
 
@@ -139,6 +146,16 @@ struct SettingsView: View {
     @ViewBuilder
     private var dataSection: some View {
         Section {
+            Toggle(isOn: $iCloudSyncEnabled) {
+                Label("Sync to iCloud", systemImage: "icloud")
+            }
+            .onChange(of: iCloudSyncEnabled) { _, newValue in
+                UserDefaults.standard.set(newValue, forKey: "iCloudSyncEnabled")
+                showSyncRestartAlert = true
+            }
+
+            iCloudStatusRow
+
             Button {
                 exportData()
             } label: {
@@ -159,8 +176,43 @@ struct SettingsView: View {
         } header: {
             Label("Data Management", systemImage: "externaldrive")
         } footer: {
-            Text("Export your data as JSON for backup. You can import it on another device.")
+            if iCloudSyncEnabled {
+                Text("Your habits and entries sync across iPhone and Apple Watch via iCloud.")
+            } else {
+                Text("Enable iCloud to sync data across your devices. Export as JSON for manual backup.")
+            }
         }
+    }
+
+    @ViewBuilder
+    private var iCloudStatusRow: some View {
+        HStack {
+            Text("iCloud Status")
+                .foregroundStyle(.secondary)
+            Spacer()
+            switch dependencies.cloudKitState {
+            case .connected:
+                Label("Connected", systemImage: "checkmark.icloud.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(.green)
+            case .unavailable:
+                Label("Unavailable", systemImage: "exclamationmark.icloud.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(.orange)
+            case .off:
+                if iCloudSyncEnabled {
+                    // Toggle is on but app hasn't restarted yet
+                    Label("Restart Required", systemImage: "arrow.clockwise.icloud.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                } else {
+                    Label("Off", systemImage: "icloud.slash")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .labelStyle(.titleAndIcon)
     }
 
     // MARK: - About Section

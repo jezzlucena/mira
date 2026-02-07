@@ -6,41 +6,41 @@ import SwiftData
 @Model
 public final class UserPreferences {
     /// Unique identifier (should only be one record per user)
-    public var id: UUID
+    public var id: UUID = UUID()
 
     // MARK: - Accessibility
 
     /// Disable haptic feedback
-    public var disableHaptics: Bool
+    public var disableHaptics: Bool = false
 
     /// Reduce motion/animations
-    public var reduceMotion: Bool
+    public var reduceMotion: Bool = false
 
     /// High contrast mode
-    public var highContrast: Bool
+    public var highContrast: Bool = false
 
     /// Use dyslexia-friendly font
-    public var useDyslexiaFont: Bool
+    public var useDyslexiaFont: Bool = false
 
     // MARK: - Privacy
 
     /// Require biometric/passcode to open app
-    public var requireAuthentication: Bool
+    public var requireAuthentication: Bool = false
 
     /// Hide app content in app switcher
-    public var hideInAppSwitcher: Bool
+    public var hideInAppSwitcher: Bool = false
 
     /// Enable HealthKit integration
-    public var healthKitEnabled: Bool
+    public var healthKitEnabled: Bool = false
 
     // MARK: - Notifications
 
     /// Enable reminder notifications
-    public var notificationsEnabled: Bool
+    public var notificationsEnabled: Bool = false
 
     /// Default reminder time (stored as hour and minute)
-    public var defaultReminderHour: Int
-    public var defaultReminderMinute: Int
+    public var defaultReminderHour: Int = 20
+    public var defaultReminderMinute: Int = 0
 
     // MARK: - Display
 
@@ -48,12 +48,12 @@ public final class UserPreferences {
     public var preferredColorSchemeRaw: String?
 
     /// Show completed habits on dashboard
-    public var showCompletedOnDashboard: Bool
+    public var showCompletedOnDashboard: Bool = true
 
     // MARK: - Onboarding
 
     /// Whether user has completed onboarding
-    public var hasCompletedOnboarding: Bool
+    public var hasCompletedOnboarding: Bool = false
 
     /// When user first opened the app
     public var firstOpenDate: Date?
@@ -64,7 +64,7 @@ public final class UserPreferences {
     public var lastSyncDate: Date?
 
     /// Whether cloud sync is enabled (paid feature)
-    public var cloudSyncEnabled: Bool
+    public var cloudSyncEnabled: Bool = false
 
     public init(
         id: UUID = UUID(),

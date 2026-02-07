@@ -18,6 +18,9 @@ public final class DependencyContainer: ObservableObject {
         modelContainer.mainContext
     }
 
+    /// Current iCloud sync state
+    @Published public private(set) var cloudKitState: CloudKitState = .off
+
     // MARK: - Services
 
     public lazy var habitService: HabitService = {
@@ -59,27 +62,72 @@ public final class DependencyContainer: ObservableObject {
     // MARK: - Initialization
 
     private init() {
-        do {
-            let schema = Schema([
-                Habit.self,
-                HabitEntry.self,
-                SentimentRecord.self,
-                UserPreferences.self
-            ])
+        let schema = Schema([
+            Habit.self,
+            HabitEntry.self,
+            SentimentRecord.self,
+            UserPreferences.self
+        ])
 
-            let modelConfiguration = ModelConfiguration(
+        // watchOS always uses CloudKit (depends on iPhone data).
+        // iOS reads the user preference.
+        #if os(watchOS)
+        let wantsCloudKit = true
+        #else
+        let wantsCloudKit = UserDefaults.standard.bool(forKey: "iCloudSyncEnabled")
+        #endif
+
+        if wantsCloudKit {
+            let cloudConfig = ModelConfiguration(
                 schema: schema,
                 isStoredInMemoryOnly: false,
                 allowsSave: true,
                 cloudKitDatabase: .automatic
             )
 
-            self.modelContainer = try ModelContainer(
+            if let container = try? ModelContainer(
                 for: schema,
-                configurations: [modelConfiguration]
-            )
-        } catch {
-            fatalError("Failed to create ModelContainer: \(error)")
+                configurations: [cloudConfig]
+            ) {
+                self.modelContainer = container
+                self.cloudKitState = .connected
+            } else {
+                // Existing local store is incompatible with CloudKit.
+                // Delete it and create a fresh CloudKit-enabled store.
+                let storeURL = cloudConfig.url
+                let dir = storeURL.deletingLastPathComponent()
+                let storeName = storeURL.deletingPathExtension().lastPathComponent
+                for suffix in ["", "-shm", "-wal"] {
+                    let fileURL = dir.appendingPathComponent(storeName + ".store" + suffix)
+                    try? FileManager.default.removeItem(at: fileURL)
+                }
+
+                do {
+                    self.modelContainer = try ModelContainer(
+                        for: schema,
+                        configurations: [cloudConfig]
+                    )
+                    self.cloudKitState = .connected
+                } catch {
+                    fatalError("Failed to create CloudKit ModelContainer after store reset: \(error)")
+                }
+            }
+        } else {
+            do {
+                let localConfig = ModelConfiguration(
+                    schema: schema,
+                    isStoredInMemoryOnly: false,
+                    allowsSave: true,
+                    cloudKitDatabase: .none
+                )
+                self.modelContainer = try ModelContainer(
+                    for: schema,
+                    configurations: [localConfig]
+                )
+                self.cloudKitState = .off
+            } catch {
+                fatalError("Failed to create ModelContainer: \(error)")
+            }
         }
     }
 
@@ -111,6 +159,17 @@ public final class DependencyContainer: ObservableObject {
             fatalError("Failed to create in-memory ModelContainer: \(error)")
         }
     }
+}
+
+// MARK: - CloudKit State
+
+public enum CloudKitState {
+    /// User has not enabled iCloud sync
+    case off
+    /// iCloud sync is active and working
+    case connected
+    /// User enabled sync but CloudKit setup failed (container not configured)
+    case unavailable
 }
 
 // MARK: - SwiftUI Environment Integration
