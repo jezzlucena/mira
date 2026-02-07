@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D1E73BD92F36DFD400CA16B2 /* MiraWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = D1E73BCF2F36DFD300CA16B2 /* MiraWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D1E73BD92F36DFD400CA16B2 /* MiraWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = D1E73BCF2F36DFD300CA16B2 /* MiraWatch Watch App.app */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -280,6 +280,7 @@
 /* Begin PBXTargetDependency section */
 		D1E73BD82F36DFD400CA16B2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
+			platformFilter = ios;
 			target = D1E73BCE2F36DFD300CA16B2 /* MiraWatch Watch App */;
 			targetProxy = D1E73BD72F36DFD400CA16B2 /* PBXContainerItemProxy */;
 		};

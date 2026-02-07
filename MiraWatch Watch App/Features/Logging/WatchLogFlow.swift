@@ -13,6 +13,7 @@ struct WatchLogFlow: View {
     @State private var step: LogStep = .sentiment
     @State private var sentiment: Int = 4
     @State private var value: Double = 0
+    @State private var entryDate = Date()
     @State private var errorMessage: String?
 
     private var needsValue: Bool {
@@ -29,14 +30,32 @@ struct WatchLogFlow: View {
                             step = .value
                         }
                     } else {
-                        saveEntry()
+                        withAnimation {
+                            step = .dateTime
+                        }
                     }
                 }
                 .navigationTitle(habit.name)
 
             case .value:
                 WatchValueInput(trackingStyle: habit.trackingStyle, value: $value) { _ in
-                    saveEntry()
+                    withAnimation {
+                        step = .dateTime
+                    }
+                }
+                .navigationTitle(habit.name)
+
+            case .dateTime:
+                ScrollView {
+                    VStack(spacing: 12) {
+                        DatePicker("When", selection: $entryDate, in: ...Date())
+                            .datePickerStyle(.automatic)
+
+                        Button("Save") {
+                            saveEntry()
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
                 }
                 .navigationTitle(habit.name)
 
@@ -67,7 +86,8 @@ struct WatchLogFlow: View {
             try dependencies.habitService.logEntry(
                 for: habit,
                 sentiment: sentiment,
-                value: entryValue
+                value: entryValue,
+                timestamp: entryDate
             )
 
             #if os(watchOS)
@@ -89,6 +109,7 @@ struct WatchLogFlow: View {
 private enum LogStep {
     case sentiment
     case value
+    case dateTime
     case confirmation
     case error
 }

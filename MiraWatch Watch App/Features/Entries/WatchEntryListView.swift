@@ -33,7 +33,7 @@ struct WatchEntryListView: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .confirmationAction) {
                 NavigationLink(value: WatchDestination.logFlow(habit)) {
                     Image(systemName: "plus")
                 }

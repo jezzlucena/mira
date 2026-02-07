@@ -549,7 +549,9 @@ struct CorrelationDetailView: View {
                 .padding()
             }
             .navigationTitle("Correlation Details")
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }

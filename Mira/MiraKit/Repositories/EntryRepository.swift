@@ -120,7 +120,8 @@ public final class EntryRepository: ObservableObject {
         sentiment: Int? = nil,
         value: Double? = nil,
         note: String? = nil,
-        contextTags: [String]? = nil
+        contextTags: [String]? = nil,
+        timestamp: Date? = nil
     ) throws {
         if let sentiment = sentiment {
             entry.sentiment = min(max(sentiment, 1), 6)
@@ -133,6 +134,9 @@ public final class EntryRepository: ObservableObject {
         }
         if let contextTags = contextTags {
             entry.contextTags = contextTags
+        }
+        if let timestamp = timestamp {
+            entry.timestamp = timestamp
         }
 
         // Mark for re-sync if not local-only

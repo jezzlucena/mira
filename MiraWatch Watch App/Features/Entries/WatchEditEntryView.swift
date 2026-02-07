@@ -11,6 +11,7 @@ struct WatchEditEntryView: View {
 
     @State private var sentiment: Int
     @State private var value: Double
+    @State private var entryDate: Date
     @State private var step: EditStep = .sentiment
 
     init(entry: HabitEntry, habit: Habit, onSave: (() -> Void)? = nil) {
@@ -19,6 +20,7 @@ struct WatchEditEntryView: View {
         self.onSave = onSave
         _sentiment = State(initialValue: entry.sentiment)
         _value = State(initialValue: entry.value ?? 0)
+        _entryDate = State(initialValue: entry.timestamp)
     }
 
     private var needsValue: Bool {
@@ -36,13 +38,30 @@ struct WatchEditEntryView: View {
                                 step = .value
                             }
                         } else {
-                            saveChanges()
+                            withAnimation {
+                                step = .dateTime
+                            }
                         }
                     }
 
                 case .value:
                     WatchValueInput(trackingStyle: habit.trackingStyle, value: $value) { _ in
-                        saveChanges()
+                        withAnimation {
+                            step = .dateTime
+                        }
+                    }
+
+                case .dateTime:
+                    ScrollView {
+                        VStack(spacing: 12) {
+                            DatePicker("When", selection: $entryDate, in: ...Date())
+                                .datePickerStyle(.automatic)
+
+                            Button("Save") {
+                                saveChanges()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
                     }
                 }
             }
@@ -63,7 +82,8 @@ struct WatchEditEntryView: View {
             try dependencies.entryRepository.update(
                 entry,
                 sentiment: sentiment,
-                value: newValue
+                value: newValue,
+                timestamp: entryDate
             )
             #if os(watchOS)
             WKInterfaceDevice.current().play(.success)
@@ -79,4 +99,5 @@ struct WatchEditEntryView: View {
 private enum EditStep {
     case sentiment
     case value
+    case dateTime
 }

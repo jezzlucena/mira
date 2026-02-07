@@ -14,6 +14,7 @@ struct QuickLogSheet: View {
     @State private var note: String = ""
     @State private var habits: [Habit] = []
     @State private var step: LogStep = .selectHabit
+    @State private var entryDate = Date()
     @State private var isSaving = false
     @State private var showError = false
 
@@ -284,6 +285,9 @@ struct QuickLogSheet: View {
                     .lineLimit(3...6)
             }
 
+            // Date & time picker
+            DatePicker("Date & Time", selection: $entryDate, in: ...Date())
+
             // Quick save button
             GlassButton("Save Entry", icon: "checkmark", style: .large) {
                 saveEntry()
@@ -337,13 +341,15 @@ struct QuickLogSheet: View {
                     for: habit,
                     sentiment: sentiment,
                     value: value,
-                    note: note.isEmpty ? nil : note
+                    note: note.isEmpty ? nil : note,
+                    timestamp: entryDate
                 )
             } else {
                 // Log standalone sentiment
                 try dependencies.sentimentRepository.create(
                     sentiment: sentiment,
-                    note: note.isEmpty ? nil : note
+                    note: note.isEmpty ? nil : note,
+                    timestamp: entryDate
                 )
             }
             onComplete()

@@ -90,7 +90,8 @@ public final class HabitService: ObservableObject {
         sentiment: Int,
         value: Double? = nil,
         note: String? = nil,
-        contextTags: [String] = []
+        contextTags: [String] = [],
+        timestamp: Date = Date()
     ) throws -> HabitEntry {
         // Validate sentiment
         guard sentiment >= 1 && sentiment <= 6 else {
@@ -107,7 +108,8 @@ public final class HabitService: ObservableObject {
             sentiment: sentiment,
             value: value,
             note: note,
-            contextTags: contextTags
+            contextTags: contextTags,
+            timestamp: timestamp
         )
     }
 

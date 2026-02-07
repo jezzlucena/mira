@@ -334,66 +334,89 @@ struct HabitDetailView: View {
                 )
                 .frame(height: 150)
             } else {
-                let grouped = groupedEntries(from: Array(entries.prefix(10)))
-                List {
-                    ForEach(grouped, id: \.date) { group in
-                        Section {
-                            ForEach(group.entries) { entry in
-                                HabitEntryRow(entry: entry)
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        selectedEntryForEdit = entry
-                                    }
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                        Button(role: .destructive) {
-                                            entryToDelete = entry
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
-                                    }
-                                    .swipeActions(edge: .leading) {
-                                        Button {
-                                            selectedEntryForEdit = entry
-                                        } label: {
-                                            Label("Edit", systemImage: "pencil")
-                                        }
-                                        .tint(.blue)
-                                    }
-                                    .contextMenu {
-                                        Button {
-                                            selectedEntryForEdit = entry
-                                        } label: {
-                                            Label("Edit", systemImage: "pencil")
-                                        }
+                entriesList
+            }
+        }
+    }
 
-                                        Button(role: .destructive) {
-                                            entryToDelete = entry
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
-                                    }
-                                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-                            }
-                        } header: {
-                            Text(formatDayHeader(group.date))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .textCase(nil)
-                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 4, trailing: 16))
-                        }
+    private func entriesListHeight(entryCount: Int, groupCount: Int) -> CGFloat {
+        let h = CGFloat(entryCount) * 64 + CGFloat(groupCount) * 30
+        return min(h, 800)
+    }
+
+    @ViewBuilder
+    private var entriesList: some View {
+        let grouped = groupedEntries(from: Array(entries.prefix(10)))
+        let listHeight = entriesListHeight(entryCount: entries.prefix(10).count, groupCount: grouped.count)
+        entriesListContent(grouped: grouped)
+            .frame(height: listHeight)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .background {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.ultraThinMaterial)
+            }
+    }
+
+    @ViewBuilder
+    private func entriesListContent(grouped: [EntryGroup]) -> some View {
+        List {
+            ForEach(grouped, id: \.date) { group in
+                Section {
+                    ForEach(group.entries) { entry in
+                        entryRow(for: entry)
                     }
-                }
-                .listStyle(.plain)
-                .listSectionSpacing(0)
-                .frame(height: min(CGFloat(entries.prefix(10).count) * 64 + CGFloat(grouped.count) * 30, 800))
-                .scrollDisabled(true)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-                .background {
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(.ultraThinMaterial)
+                } header: {
+                    Text(formatDayHeader(group.date))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .textCase(nil)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 4, trailing: 16))
                 }
             }
         }
+        .listStyle(.plain)
+        #if !os(macOS)
+        .listSectionSpacing(0)
+        #endif
+        .scrollDisabled(true)
+    }
+
+    @ViewBuilder
+    private func entryRow(for entry: HabitEntry) -> some View {
+        HabitEntryRow(entry: entry)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                selectedEntryForEdit = entry
+            }
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                Button(role: .destructive) {
+                    entryToDelete = entry
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+            .swipeActions(edge: .leading) {
+                Button {
+                    selectedEntryForEdit = entry
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+                .tint(.blue)
+            }
+            .contextMenu {
+                Button {
+                    selectedEntryForEdit = entry
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+
+                Button(role: .destructive) {
+                    entryToDelete = entry
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
     }
 
     // MARK: - Helpers
@@ -516,21 +539,22 @@ struct EditEntrySheet: View {
     @State private var sentiment: Int?
     @State private var value: Double?
     @State private var note: String = ""
+    @State private var entryDate: Date
     @State private var isSaving = false
+
+    init(entry: HabitEntry, habit: Habit, onSave: @escaping () -> Void) {
+        self.entry = entry
+        self.habit = habit
+        self.onSave = onSave
+        _entryDate = State(initialValue: entry.timestamp)
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Timestamp (read-only)
-                    HStack {
-                        Image(systemName: "clock")
-                            .foregroundStyle(.secondary)
-                        Text(entry.timestamp, format: .dateTime.month(.abbreviated).day().hour().minute())
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                    }
+                    // Timestamp
+                    DatePicker("Date & Time", selection: $entryDate, in: ...Date())
 
                     // Sentiment picker
                     SentimentPicker(selectedSentiment: $sentiment)
@@ -553,7 +577,9 @@ struct EditEntrySheet: View {
                 .padding()
             }
             .navigationTitle("Edit Entry")
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -634,7 +660,7 @@ struct EditEntrySheet: View {
             entry.value = value
             entry.note = note.isEmpty ? nil : note
 
-            try dependencies.entryRepository.update(entry, sentiment: sentiment)
+            try dependencies.entryRepository.update(entry, sentiment: sentiment, timestamp: entryDate)
             onSave()
             dismiss()
         } catch {
