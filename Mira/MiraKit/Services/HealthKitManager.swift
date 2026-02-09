@@ -340,6 +340,46 @@ public final class HealthKitManager: ObservableObject {
         }
     }
 
+    // MARK: - Resting Heart Rate
+
+    /// Gets resting heart rate for a date
+    public func getRestingHeartRate(for date: Date) async throws -> Double? {
+        guard let healthStore = healthStore,
+              let restingHRType = HKObjectType.quantityType(forIdentifier: .restingHeartRate) else {
+            throw HealthKitError.notAvailable
+        }
+
+        let calendar = Calendar.current
+        let startDate = calendar.startOfDay(for: date)
+        let endDate = calendar.date(byAdding: .day, value: 1, to: startDate)!
+
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: endDate,
+            options: .strictStartDate
+        )
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: restingHRType,
+                quantitySamplePredicate: predicate,
+                options: .discreteAverage
+            ) { _, statistics, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                let average = statistics?.averageQuantity()?.doubleValue(
+                    for: HKUnit.count().unitDivided(by: .minute())
+                )
+                continuation.resume(returning: average)
+            }
+
+            healthStore.execute(query)
+        }
+    }
+
     // MARK: - HRV (Heart Rate Variability)
 
     /// Gets average HRV for a date

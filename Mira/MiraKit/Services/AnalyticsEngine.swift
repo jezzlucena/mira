@@ -100,60 +100,62 @@ public final class AnalyticsEngine: ObservableObject {
 
     // MARK: - Habit Correlations
 
-    /// Calculates correlation between a habit and mood
-    /// Returns a value between -1 (negative correlation) and 1 (positive correlation)
+    /// Calculates correlation between a habit's presence and mood using point-biserial correlation.
+    /// For each day with mood data, correlates habit logged (1) vs not logged (0) with average mood.
+    /// A positive value means logging the habit is associated with higher mood; negative with lower mood.
     public func habitMoodCorrelation(for habit: Habit, days: Int = 30) throws -> CorrelationResult {
         let calendar = Calendar.current
         let startDate = calendar.date(byAdding: .day, value: -days, to: Date())!
 
-        // Get entries for this habit
+        // Identify days where this habit was logged
         let habitEntries = habit.allEntries.filter { $0.timestamp >= startDate }
+        var habitDaySet: Set<Date> = []
+        for entry in habitEntries {
+            habitDaySet.insert(calendar.startOfDay(for: entry.timestamp))
+        }
 
-        // Get all sentiment data for comparison
+        // Collect overall mood by day (all entries + sentiment records)
         let allEntries = try fetchAllEntries(forLastDays: days)
         let sentimentRecords = try fetchAllSentimentRecords(forLastDays: days)
 
-        // Group by day
-        var habitDays: [Date: [Int]] = [:]
-        var moodDays: [Date: [Int]] = [:]
-
-        for entry in habitEntries {
-            let day = calendar.startOfDay(for: entry.timestamp)
-            habitDays[day, default: []].append(entry.sentiment)
-        }
-
+        var moodByDay: [Date: [Int]] = [:]
         for entry in allEntries {
             let day = calendar.startOfDay(for: entry.timestamp)
-            moodDays[day, default: []].append(entry.sentiment)
+            moodByDay[day, default: []].append(entry.sentiment)
         }
-
         for record in sentimentRecords {
             let day = calendar.startOfDay(for: record.timestamp)
-            moodDays[day, default: []].append(record.sentiment)
+            moodByDay[day, default: []].append(record.sentiment)
         }
 
-        // Calculate averages for days where we have both
-        var habitAvgs: [Double] = []
-        var moodAvgs: [Double] = []
+        // Point-biserial: for each day with mood data, x = habit present (1/0), y = avg mood
+        var habitPresence: [Double] = []
+        var dayMoodAvgs: [Double] = []
+        var moodsOnHabitDays: [Double] = []
 
-        for (day, habitSentiments) in habitDays {
-            guard let moodSentiments = moodDays[day], !moodSentiments.isEmpty else { continue }
-
-            let habitAvg = Double(habitSentiments.reduce(0, +)) / Double(habitSentiments.count)
-            let moodAvg = Double(moodSentiments.reduce(0, +)) / Double(moodSentiments.count)
-
-            habitAvgs.append(habitAvg)
-            moodAvgs.append(moodAvg)
+        for (day, sentiments) in moodByDay {
+            guard !sentiments.isEmpty else { continue }
+            let avg = Double(sentiments.reduce(0, +)) / Double(sentiments.count)
+            let logged = habitDaySet.contains(day)
+            habitPresence.append(logged ? 1.0 : 0.0)
+            dayMoodAvgs.append(avg)
+            if logged {
+                moodsOnHabitDays.append(avg)
+            }
         }
 
-        // Calculate Pearson correlation
-        let correlation = pearsonCorrelation(x: habitAvgs, y: moodAvgs)
+        // Pearson on binary x gives point-biserial correlation
+        let correlation = pearsonCorrelation(x: habitPresence, y: dayMoodAvgs)
+
+        let avgMoodWhenLogged: Double? = moodsOnHabitDays.isEmpty ? nil :
+            moodsOnHabitDays.reduce(0, +) / Double(moodsOnHabitDays.count)
 
         return CorrelationResult(
             habit: habit,
             correlation: correlation,
-            sampleSize: habitAvgs.count,
-            periodDays: days
+            sampleSize: habitDaySet.count,
+            periodDays: days,
+            averageMoodWhenLogged: avgMoodWhenLogged
         )
     }
 
@@ -164,13 +166,18 @@ public final class AnalyticsEngine: ObservableObject {
 
         for habit in habits {
             let result = try habitMoodCorrelation(for: habit, days: days)
-            if result.sampleSize >= 3 { // Need at least 3 data points
+            if result.sampleSize >= 1 {
                 results.append(result)
             }
         }
 
-        // Sort by absolute correlation strength
-        return results.sorted { abs($0.correlation ?? 0) > abs($1.correlation ?? 0) }
+        // Sort: strong correlations first, then by sample size for early data
+        return results.sorted {
+            let a = abs($0.correlation ?? 0)
+            let b = abs($1.correlation ?? 0)
+            if a != b { return a > b }
+            return $0.sampleSize > $1.sampleSize
+        }
     }
 
     // MARK: - Health Correlations
@@ -197,7 +204,7 @@ public final class AnalyticsEngine: ObservableObject {
             }
         }
 
-        guard sleepScores.count >= 3 else { return nil }
+        guard sleepScores.count >= 2 else { return nil }
 
         let correlation = pearsonCorrelation(x: sleepScores, y: moodScores)
 
@@ -207,6 +214,113 @@ public final class AnalyticsEngine: ObservableObject {
             averageMood: moodScores.reduce(0, +) / Double(moodScores.count),
             sampleSize: sleepScores.count
         )
+    }
+
+    /// Correlates resting heart rate with mood
+    public func restingHeartRateMoodCorrelation(days: Int = 30) async throws -> RestingHeartRateMoodCorrelation? {
+        guard healthKitManager.isAvailable else { return nil }
+
+        let calendar = Calendar.current
+        var hrValues: [Double] = []
+        var moodValues: [Double] = []
+
+        for dayOffset in 0..<days {
+            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: Date()) else { continue }
+
+            if let restingHR = try? await healthKitManager.getRestingHeartRate(for: date),
+               let dayMood = try getMoodForDay(date) {
+                hrValues.append(restingHR)
+                moodValues.append(dayMood)
+            }
+        }
+
+        guard hrValues.count >= 2 else { return nil }
+
+        let correlation = pearsonCorrelation(x: hrValues, y: moodValues)
+
+        return RestingHeartRateMoodCorrelation(
+            correlation: correlation,
+            averageHeartRate: hrValues.reduce(0, +) / Double(hrValues.count),
+            averageMood: moodValues.reduce(0, +) / Double(moodValues.count),
+            sampleSize: hrValues.count
+        )
+    }
+
+    /// Correlates heart rate variability with mood
+    public func hrvMoodCorrelation(days: Int = 30) async throws -> HRVMoodCorrelation? {
+        guard healthKitManager.isAvailable else { return nil }
+
+        let calendar = Calendar.current
+        var hrvValues: [Double] = []
+        var moodValues: [Double] = []
+
+        for dayOffset in 0..<days {
+            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: Date()) else { continue }
+
+            if let hrv = try? await healthKitManager.getAverageHRV(for: date),
+               let dayMood = try getMoodForDay(date) {
+                hrvValues.append(hrv)
+                moodValues.append(dayMood)
+            }
+        }
+
+        guard hrvValues.count >= 2 else { return nil }
+
+        let correlation = pearsonCorrelation(x: hrvValues, y: moodValues)
+
+        return HRVMoodCorrelation(
+            correlation: correlation,
+            averageHRV: hrvValues.reduce(0, +) / Double(hrvValues.count),
+            averageMood: moodValues.reduce(0, +) / Double(moodValues.count),
+            sampleSize: hrvValues.count
+        )
+    }
+
+    /// Fetches all available health-mood correlations
+    public func allHealthCorrelations(days: Int = 30) async throws -> [HealthCorrelation] {
+        var results: [HealthCorrelation] = []
+
+        if let sleep = try await sleepMoodCorrelation(days: days) {
+            results.append(HealthCorrelation(
+                metric: .sleep,
+                correlation: sleep.correlation,
+                averageMetricValue: sleep.averageSleepHours,
+                averageMood: sleep.averageMood,
+                sampleSize: sleep.sampleSize
+            ))
+        }
+
+        if let steps = try await stepsMoodCorrelation(days: days) {
+            results.append(HealthCorrelation(
+                metric: .steps,
+                correlation: steps.correlation,
+                averageMetricValue: steps.averageSteps,
+                averageMood: steps.averageMood,
+                sampleSize: steps.sampleSize
+            ))
+        }
+
+        if let hr = try await restingHeartRateMoodCorrelation(days: days) {
+            results.append(HealthCorrelation(
+                metric: .restingHeartRate,
+                correlation: hr.correlation,
+                averageMetricValue: hr.averageHeartRate,
+                averageMood: hr.averageMood,
+                sampleSize: hr.sampleSize
+            ))
+        }
+
+        if let hrv = try await hrvMoodCorrelation(days: days) {
+            results.append(HealthCorrelation(
+                metric: .hrv,
+                correlation: hrv.correlation,
+                averageMetricValue: hrv.averageHRV,
+                averageMood: hrv.averageMood,
+                sampleSize: hrv.sampleSize
+            ))
+        }
+
+        return results.sorted { abs($0.correlation ?? 0) > abs($1.correlation ?? 0) }
     }
 
     /// Correlates step count with mood
@@ -219,13 +333,15 @@ public final class AnalyticsEngine: ObservableObject {
         var moods: [Double] = []
 
         for (date, stepCount) in stepsByDay {
+            // Skip days with 0 steps (likely no watch data, not a real 0)
+            guard stepCount > 0 else { continue }
             if let dayMood = try getMoodForDay(date) {
                 steps.append(Double(stepCount))
                 moods.append(dayMood)
             }
         }
 
-        guard steps.count >= 3 else { return nil }
+        guard steps.count >= 2 else { return nil }
 
         let correlation = pearsonCorrelation(x: steps, y: moods)
 
@@ -243,71 +359,214 @@ public final class AnalyticsEngine: ObservableObject {
     public func generateInsights(days: Int = 30) async throws -> [Insight] {
         var insights: [Insight] = []
 
-        // Habit-mood correlations
+        let allEntries = try fetchAllEntries(forLastDays: days)
+        let sentimentRecords = try fetchAllSentimentRecords(forLastDays: days)
+        let habits = try fetchAllHabits()
+        let totalLogs = allEntries.count + sentimentRecords.count
+        let allSentiments = allEntries.map(\.sentiment) + sentimentRecords.map(\.sentiment)
+
+        // === Correlation-based insights (lowered threshold from 0.3 → 0.15) ===
         let correlations = try findMoodCorrelations(days: days)
 
         for corr in correlations.prefix(3) {
-            if let c = corr.correlation, abs(c) > 0.3 {
+            if let c = corr.correlation, abs(c) > 0.15 {
                 let direction = c > 0 ? "higher" : "lower"
                 let habitName = corr.habit.name
 
-                let insight = Insight(
+                insights.append(Insight(
                     type: .habitCorrelation,
                     title: "Pattern with \(habitName)",
                     description: "When you log \(habitName), your mood tends to be \(direction).",
                     strength: abs(c),
                     relatedHabit: corr.habit
-                )
-                insights.append(insight)
+                ))
             }
         }
 
-        // Day of week patterns
+        // === Day of week pattern (lowered threshold from 0.5 → 0.3) ===
         let dayOfWeekSentiment = try sentimentByDayOfWeek(forLastDays: days)
         if let (bestDay, bestMood) = dayOfWeekSentiment.max(by: { $0.value < $1.value }),
            let (worstDay, worstMood) = dayOfWeekSentiment.min(by: { $0.value < $1.value }),
-           bestMood - worstMood > 0.5 {
+           bestMood - worstMood > 0.3 {
 
             let dayNames = ["", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
-            let insight = Insight(
+            insights.append(Insight(
                 type: .temporalPattern,
                 title: "Weekly Pattern",
                 description: "Your mood tends to be highest on \(dayNames[bestDay]) and lowest on \(dayNames[worstDay]).",
-                strength: (bestMood - worstMood) / 5.0, // Normalize to 0-1
+                strength: min((bestMood - worstMood) / 5.0, 1.0),
                 relatedHabit: nil
-            )
-            insights.append(insight)
+            ))
         }
 
-        // Sleep correlation
-        if let sleepCorr = try await sleepMoodCorrelation(days: days),
-           let c = sleepCorr.correlation, abs(c) > 0.3 {
-            let direction = c > 0 ? "better" : "worse"
+        // === Logging frequency ↔ mood (easy to achieve with a few entries across days) ===
+        let calendar = Calendar.current
+        var logCountByDay: [Date: Int] = [:]
+        var moodByDayMap: [Date: [Int]] = [:]
+        for entry in allEntries {
+            let day = calendar.startOfDay(for: entry.timestamp)
+            logCountByDay[day, default: 0] += 1
+            moodByDayMap[day, default: []].append(entry.sentiment)
+        }
+        for record in sentimentRecords {
+            let day = calendar.startOfDay(for: record.timestamp)
+            moodByDayMap[day, default: []].append(record.sentiment)
+        }
 
-            let insight = Insight(
+        var logCounts: [Double] = []
+        var dayMoods: [Double] = []
+        for (day, count) in logCountByDay {
+            if let moods = moodByDayMap[day], !moods.isEmpty {
+                logCounts.append(Double(count))
+                dayMoods.append(Double(moods.reduce(0, +)) / Double(moods.count))
+            }
+        }
+        if logCounts.count >= 3,
+           let c = pearsonCorrelation(x: logCounts, y: dayMoods), abs(c) > 0.15 {
+            let direction = c > 0 ? "higher" : "lower"
+            insights.append(Insight(
+                type: .habitCorrelation,
+                title: "Tracking & Mood",
+                description: "On days you log more, your mood tends to be \(direction).",
+                strength: abs(c) * 0.8,
+                relatedHabit: nil
+            ))
+        }
+
+        // === Health correlations (lowered threshold from 0.3 → 0.15) ===
+
+        if let sleepCorr = try await sleepMoodCorrelation(days: days),
+           let c = sleepCorr.correlation, abs(c) > 0.15 {
+            let direction = c > 0 ? "better" : "worse"
+            insights.append(Insight(
                 type: .healthCorrelation,
                 title: "Sleep & Mood",
                 description: "More sleep is associated with \(direction) mood for you.",
                 strength: abs(c),
                 relatedHabit: nil
-            )
-            insights.append(insight)
+            ))
         }
 
-        // Steps correlation
         if let stepsCorr = try await stepsMoodCorrelation(days: days),
-           let c = stepsCorr.correlation, abs(c) > 0.3 {
+           let c = stepsCorr.correlation, abs(c) > 0.15 {
             let direction = c > 0 ? "better" : "worse"
-
-            let insight = Insight(
+            insights.append(Insight(
                 type: .healthCorrelation,
                 title: "Activity & Mood",
                 description: "More steps are associated with \(direction) mood for you.",
                 strength: abs(c),
                 relatedHabit: nil
-            )
-            insights.append(insight)
+            ))
+        }
+
+        if let hrCorr = try await restingHeartRateMoodCorrelation(days: days),
+           let c = hrCorr.correlation, abs(c) > 0.15 {
+            let direction = c > 0 ? "higher" : "lower"
+            insights.append(Insight(
+                type: .healthCorrelation,
+                title: "Heart Rate & Mood",
+                description: "A higher resting heart rate is associated with \(direction) mood for you.",
+                strength: abs(c),
+                relatedHabit: nil
+            ))
+        }
+
+        if let hrvCorr = try await hrvMoodCorrelation(days: days),
+           let c = hrvCorr.correlation, abs(c) > 0.15 {
+            let direction = c > 0 ? "better" : "worse"
+            insights.append(Insight(
+                type: .healthCorrelation,
+                title: "HRV & Mood",
+                description: "Higher heart rate variability is associated with \(direction) mood for you.",
+                strength: abs(c),
+                relatedHabit: nil
+            ))
+        }
+
+        // === Simple observations (work with very little data) ===
+
+        // Mood snapshot
+        if !allSentiments.isEmpty {
+            let avg = Double(allSentiments.reduce(0, +)) / Double(allSentiments.count)
+            let emoji = sentimentEmojiFor(Int(avg.rounded()))
+            insights.append(Insight(
+                type: .temporalPattern,
+                title: "Mood Snapshot",
+                description: "Your average mood over the last \(days) days is \(String(format: "%.1f", avg)) \(emoji).",
+                strength: 0.15,
+                relatedHabit: nil
+            ))
+        }
+
+        // Most-tracked habit
+        if let mostLogged = habits.max(by: { $0.entries(forLastDays: days).count < $1.entries(forLastDays: days).count }),
+           mostLogged.entries(forLastDays: days).count >= 2 {
+            let count = mostLogged.entries(forLastDays: days).count
+            insights.append(Insight(
+                type: .habitCorrelation,
+                title: "Most Tracked",
+                description: "You've logged \(mostLogged.name) \(count) times — it's your most tracked habit.",
+                strength: 0.15,
+                relatedHabit: mostLogged
+            ))
+        }
+
+        // === Milestones ===
+
+        if totalLogs > 0 && totalLogs <= 5 {
+            insights.append(Insight(
+                type: .milestone,
+                title: "You've Started",
+                description: "You've logged \(totalLogs) \(totalLogs == 1 ? "entry" : "entries"). Every data point helps build your picture.",
+                strength: 0.2,
+                relatedHabit: nil
+            ))
+        } else if totalLogs >= 10 && totalLogs < 25 {
+            insights.append(Insight(
+                type: .milestone,
+                title: "Building Momentum",
+                description: "\(totalLogs) entries so far. Patterns are starting to take shape.",
+                strength: 0.25,
+                relatedHabit: nil
+            ))
+        } else if totalLogs >= 25 {
+            insights.append(Insight(
+                type: .milestone,
+                title: "Rich Dataset",
+                description: "\(totalLogs) entries give Mira a solid foundation for finding patterns.",
+                strength: 0.3,
+                relatedHabit: nil
+            ))
+        }
+
+        // === Wisdom insights (shown for sparse data, rotating daily) ===
+
+        if totalLogs < 15 {
+            let wisdomPool: [(title: String, description: String)] = [
+                ("Observe, Don't Judge",
+                 "There are no \"good\" or \"bad\" habits here — just patterns waiting to be noticed."),
+                ("Every Entry Counts",
+                 "Even logging a rough day is valuable. That data point matters just as much."),
+                ("Patterns Take Time",
+                 "The more you log, the more correlations emerge. There's no rush."),
+                ("You Define Progress",
+                 "Mira doesn't set goals for you. Understanding yourself is the goal."),
+                ("No Neutral Option",
+                 "The 1–6 scale has no middle — because honest reflection starts with a choice."),
+                ("Data, Not Pressure",
+                 "Missed a day? That's fine. When you come back, your data is here waiting."),
+            ]
+            let dayOfYear = calendar.ordinality(of: .day, in: .year, for: Date()) ?? 0
+            let index = dayOfYear % wisdomPool.count
+            let wisdom = wisdomPool[index]
+            insights.append(Insight(
+                type: .milestone,
+                title: wisdom.title,
+                description: wisdom.description,
+                strength: 0.1,
+                relatedHabit: nil
+            ))
         }
 
         return insights.sorted { $0.strength > $1.strength }
@@ -498,19 +757,31 @@ public struct CorrelationResult: Identifiable {
     public let correlation: Double?
     public let sampleSize: Int
     public let periodDays: Int
+    public let averageMoodWhenLogged: Double?
 
     public var strengthDescription: String {
-        guard let c = correlation else { return "Insufficient data" }
+        guard let c = correlation else {
+            if let avg = averageMoodWhenLogged {
+                let emoji = sentimentEmojiFor(Int(avg.rounded()))
+                return "Avg mood \(String(format: "%.1f", avg)) \(emoji) · keep logging"
+            }
+            return "Keep logging to see patterns"
+        }
         let absC = abs(c)
         let direction = c > 0 ? "improves mood" : "lowers mood"
         if absC > 0.6 { return "Strong link · \(direction)" }
         if absC > 0.3 { return "Moderate link · \(direction)" }
         if absC > 0.1 { return "Mild link · \(direction)" }
-        return "Weak link"
+        return "Weak link · \(direction)"
     }
 
     public var strengthLabel: String {
-        guard let c = correlation else { return "Insufficient data" }
+        guard let c = correlation else {
+            if averageMoodWhenLogged != nil {
+                return "Early data"
+            }
+            return "Not enough data"
+        }
         let absC = abs(c)
         if absC > 0.6 { return "Strong link" }
         if absC > 0.3 { return "Moderate link" }
@@ -520,13 +791,19 @@ public struct CorrelationResult: Identifiable {
 
     /// Normalized strength for visual bar (0–1)
     public var normalizedStrength: Double {
-        guard let c = correlation else { return 0 }
-        return min(abs(c), 1.0)
+        if let c = correlation { return min(abs(c), 1.0) }
+        // For early data, show mood deviation from neutral as progress
+        if let avg = averageMoodWhenLogged {
+            return min(abs(avg - 3.5) / 2.5, 1.0)
+        }
+        return 0
     }
 
     /// Whether the correlation is positive
     public var isPositive: Bool {
-        (correlation ?? 0) > 0
+        if let c = correlation { return c > 0 }
+        if let avg = averageMoodWhenLogged { return avg > 3.5 }
+        return true
     }
 }
 
@@ -542,6 +819,121 @@ public struct StepsMoodCorrelation {
     public let averageSteps: Double
     public let averageMood: Double
     public let sampleSize: Int
+}
+
+public struct RestingHeartRateMoodCorrelation {
+    public let correlation: Double?
+    public let averageHeartRate: Double
+    public let averageMood: Double
+    public let sampleSize: Int
+}
+
+public struct HRVMoodCorrelation {
+    public let correlation: Double?
+    public let averageHRV: Double
+    public let averageMood: Double
+    public let sampleSize: Int
+}
+
+public struct HealthCorrelation: Identifiable {
+    public let id = UUID()
+    public let metric: HealthMetric
+    public let correlation: Double?
+    public let averageMetricValue: Double
+    public let averageMood: Double
+    public let sampleSize: Int
+
+    public var isPositive: Bool {
+        (correlation ?? 0) > 0
+    }
+
+    public var normalizedStrength: Double {
+        if let c = correlation { return min(abs(c), 1.0) }
+        // For early data, show mood deviation from neutral
+        return min(abs(averageMood - 3.5) / 2.5, 1.0)
+    }
+
+    public var strengthDescription: String {
+        guard let c = correlation else {
+            let emoji = sentimentEmojiFor(Int(averageMood.rounded()))
+            return "Avg mood \(String(format: "%.1f", averageMood)) \(emoji) · tracking"
+        }
+        let absC = abs(c)
+        let verb = metric.moodVerb(positive: c > 0)
+        if absC > 0.6 { return "Strong link · \(verb)" }
+        if absC > 0.3 { return "Moderate link · \(verb)" }
+        if absC > 0.1 { return "Mild link · \(verb)" }
+        return "Weak link · \(verb)"
+    }
+
+    public var strengthLabel: String {
+        guard let c = correlation else { return "Early data" }
+        let absC = abs(c)
+        if absC > 0.6 { return "Strong link" }
+        if absC > 0.3 { return "Moderate link" }
+        if absC > 0.1 { return "Mild link" }
+        return "Weak link"
+    }
+
+    public var formattedValue: String {
+        metric.formatValue(averageMetricValue)
+    }
+
+    public enum HealthMetric: String, CaseIterable {
+        case sleep
+        case steps
+        case restingHeartRate
+        case hrv
+
+        public var name: String {
+            switch self {
+            case .sleep: return "Sleep"
+            case .steps: return "Steps"
+            case .restingHeartRate: return "Resting Heart Rate"
+            case .hrv: return "Heart Rate Variability"
+            }
+        }
+
+        public var shortName: String {
+            switch self {
+            case .sleep: return "Sleep"
+            case .steps: return "Steps"
+            case .restingHeartRate: return "Resting HR"
+            case .hrv: return "HRV"
+            }
+        }
+
+        public var icon: String {
+            switch self {
+            case .sleep: return "bed.double.fill"
+            case .steps: return "figure.walk"
+            case .restingHeartRate: return "heart.fill"
+            case .hrv: return "waveform.path.ecg"
+            }
+        }
+
+        public var unit: String {
+            switch self {
+            case .sleep: return "hrs"
+            case .steps: return "steps"
+            case .restingHeartRate: return "bpm"
+            case .hrv: return "ms"
+            }
+        }
+
+        public func formatValue(_ value: Double) -> String {
+            switch self {
+            case .sleep: return String(format: "%.1f %@", value, unit)
+            case .steps: return "\(Int(value).formatted()) \(unit)"
+            case .restingHeartRate: return "\(Int(value)) \(unit)"
+            case .hrv: return "\(Int(value)) \(unit)"
+            }
+        }
+
+        public func moodVerb(positive: Bool) -> String {
+            positive ? "improves mood" : "lowers mood"
+        }
+    }
 }
 
 public struct HabitMoodComparison {

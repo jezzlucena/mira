@@ -18,6 +18,31 @@ extension Color {
     }
 }
 
+// MARK: - Color to Hex
+
+extension Color {
+    /// Converts a Color back to a hex string (e.g. "#FF3B30")
+    public func toHex() -> String {
+        #if canImport(UIKit)
+        let uiColor = UIColor(self)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
+        #elseif canImport(AppKit)
+        let nsColor = NSColor(self)
+        guard let rgbColor = nsColor.usingColorSpace(.deviceRGB) else { return "#007AFF" }
+        return String(
+            format: "#%02X%02X%02X",
+            Int(rgbColor.redComponent * 255),
+            Int(rgbColor.greenComponent * 255),
+            Int(rgbColor.blueComponent * 255)
+        )
+        #else
+        return "#007AFF"
+        #endif
+    }
+}
+
 // MARK: - Sentiment Helpers
 
 /// Returns the emoji for a sentiment value (1-6 scale)

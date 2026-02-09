@@ -9,9 +9,12 @@ struct AnalyticsView: View {
     @State private var dayOfWeekData: [Int: Double] = [:]
     @State private var hourOfDayData: [Int: Double] = [:]
     @State private var correlations: [CorrelationResult] = []
+    @State private var healthCorrelations: [HealthCorrelation] = []
     @State private var isLoading = true
+    @State private var healthKitEnabled = false
     @State private var selectedPeriod = 30
     @State private var selectedCorrelation: CorrelationResult?
+    @State private var selectedHealthCorrelation: HealthCorrelation?
     @AppStorage("exampleInsightDismissed") private var exampleInsightDismissed = false
     @AppStorage("exampleCorrelationDismissed") private var exampleCorrelationDismissed = false
 
@@ -35,6 +38,11 @@ struct AnalyticsView: View {
 
                     // Correlations
                     correlationsSection
+
+                    // Health correlations (only when HealthKit enabled)
+                    if healthKitEnabled {
+                        healthCorrelationsSection
+                    }
                 }
                 .padding()
             }
@@ -50,6 +58,12 @@ struct AnalyticsView: View {
             }
             .sheet(item: $selectedCorrelation) { result in
                 CorrelationDetailView(
+                    result: result,
+                    period: selectedPeriod
+                )
+            }
+            .sheet(item: $selectedHealthCorrelation) { result in
+                HealthCorrelationDetailView(
                     result: result,
                     period: selectedPeriod
                 )
@@ -80,7 +94,7 @@ struct AnalyticsView: View {
             if insights.isEmpty {
                 exampleInsightCard
             } else {
-                ForEach(insights.prefix(3)) { insight in
+                ForEach(insights.prefix(5)) { insight in
                     InsightCard(insight: insight)
                 }
             }
@@ -282,6 +296,49 @@ struct AnalyticsView: View {
         }
     }
 
+    // MARK: - Health Correlations Section
+
+    @ViewBuilder
+    private var healthCorrelationsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Health & Mood", systemImage: "heart.text.clipboard")
+                .font(.headline)
+
+            if healthCorrelations.isEmpty {
+                HStack(spacing: 12) {
+                    Image(systemName: "heart.fill")
+                        .foregroundStyle(.red.opacity(0.6))
+                        .frame(width: 32)
+
+                    Text("Not enough health data yet. Keep logging and wearing your Apple Watch to see correlations.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.ultraThinMaterial)
+                }
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(healthCorrelations) { result in
+                        HealthCorrelationRow(result: result)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedHealthCorrelation = result
+                            }
+                    }
+                }
+                .padding()
+                .background {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.ultraThinMaterial)
+                }
+            }
+        }
+    }
+
     // MARK: - Data Loading
 
     private func loadData() async {
@@ -289,6 +346,10 @@ struct AnalyticsView: View {
         defer { isLoading = false }
 
         do {
+            // Check HealthKit preference
+            let prefs = try? dependencies.preferencesRepository.get()
+            healthKitEnabled = prefs?.healthKitEnabled ?? false
+
             // Load trend data and fill in empty days
             let trend = try dependencies.analyticsEngine.sentimentTrend(forLastDays: selectedPeriod)
             sentimentTrend = Self.fillMissingDays(from: trend, days: selectedPeriod)
@@ -301,6 +362,11 @@ struct AnalyticsView: View {
 
             // Load correlations
             correlations = try dependencies.analyticsEngine.findMoodCorrelations(days: selectedPeriod)
+
+            // Load health correlations
+            if healthKitEnabled {
+                healthCorrelations = try await dependencies.analyticsEngine.allHealthCorrelations(days: selectedPeriod)
+            }
 
             // Load insights
             insights = try await dependencies.analyticsEngine.generateInsights(days: selectedPeriod)
@@ -460,7 +526,8 @@ struct CorrelationRow: View {
     let result: CorrelationResult
 
     private var barColor: Color {
-        result.isPositive ? .green : .orange
+        if result.correlation == nil { return .blue }
+        return result.isPositive ? .green : .orange
     }
 
     var body: some View {
@@ -476,6 +543,9 @@ struct CorrelationRow: View {
 
                     if result.correlation != nil {
                         Text(result.isPositive ? "😊" : "😔")
+                            .font(.caption)
+                    } else if let avg = result.averageMoodWhenLogged {
+                        Text(sentimentEmojiFor(Int(avg.rounded())))
                             .font(.caption)
                     }
                 }
@@ -540,8 +610,10 @@ struct CorrelationDetailView: View {
                         comparisonChart(comparison)
                     }
 
-                    // Correlation strength
-                    strengthSection
+                    // Correlation strength (only when we have Pearson data)
+                    if result.correlation != nil {
+                        strengthSection
+                    }
 
                     // Sample size
                     sampleSizeSection
@@ -745,9 +817,15 @@ struct CorrelationDetailView: View {
                 .foregroundStyle(.secondary)
 
             if let comparison {
-                Text("Based on \(comparison.totalDays) days of data (\(comparison.daysWithHabit) with \(result.habit.name), \(comparison.daysWithoutHabit) without)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if result.correlation != nil {
+                    Text("Based on \(comparison.totalDays) days of data (\(comparison.daysWithHabit) with \(result.habit.name), \(comparison.daysWithoutHabit) without)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Based on \(comparison.daysWithHabit) \(comparison.daysWithHabit == 1 ? "day" : "days") with \(result.habit.name). Log more to unlock correlation analysis.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             } else {
                 Text("Based on \(result.sampleSize) days of data")
                     .font(.caption)
@@ -772,6 +850,331 @@ struct CorrelationDetailView: View {
             )
         } catch {
             print("Failed to load comparison: \(error)")
+        }
+    }
+}
+
+// MARK: - Health Correlation Row
+
+struct HealthCorrelationRow: View {
+    let result: HealthCorrelation
+
+    private var barColor: Color {
+        result.isPositive ? .green : .orange
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: result.metric.icon)
+                .foregroundStyle(.red)
+                .frame(width: 32)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(result.metric.shortName)
+                        .font(.subheadline.bold())
+
+                    if result.correlation != nil {
+                        Text(result.isPositive ? "😊" : "😔")
+                            .font(.caption)
+                    }
+                }
+
+                Text(result.strengthDescription)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.secondary.opacity(0.15))
+                            .frame(height: 6)
+
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [barColor.opacity(0.6), barColor],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: geometry.size.width * result.normalizedStrength, height: 6)
+                    }
+                }
+                .frame(height: 6)
+            }
+
+            Spacer(minLength: 0)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(result.formattedValue)
+                    .font(.caption2.bold())
+                Text("avg")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
+            Image(systemName: "chevron.right")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.vertical, 6)
+    }
+}
+
+// MARK: - Health Correlation Detail View
+
+struct HealthCorrelationDetailView: View {
+    @Environment(\.dependencies) private var dependencies
+    @Environment(\.dismiss) private var dismiss
+    let result: HealthCorrelation
+    let period: Int
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
+                    metricHeader
+
+                    averagesSection
+
+                    comparisonChart
+
+                    if result.correlation != nil {
+                        strengthSection
+                    }
+
+                    sampleSizeSection
+                }
+                .padding()
+            }
+            .navigationTitle("Health Details")
+            #if !os(macOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+
+    // MARK: - Header
+
+    @ViewBuilder
+    private var metricHeader: some View {
+        VStack(spacing: 12) {
+            Image(systemName: result.metric.icon)
+                .font(.system(size: 40))
+                .foregroundStyle(.red)
+                .frame(width: 80, height: 80)
+                .background {
+                    Circle()
+                        .fill(Color.red.opacity(0.15))
+                }
+
+            Text(result.metric.name)
+                .font(.title2.bold())
+
+            Text("Average: \(result.formattedValue)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 8)
+    }
+
+    // MARK: - Averages
+
+    @ViewBuilder
+    private var averagesSection: some View {
+        let emoji = sentimentEmojiFor(Int(result.averageMood.rounded()))
+        let text: String = {
+            guard let c = result.correlation else {
+                return "Still gathering data. Your average mood alongside \(result.metric.shortName.lowercased()) tracking is \(String(format: "%.1f", result.averageMood)) \(emoji). Keep logging to reveal the link."
+            }
+            if c > 0.1 { return "\(result.metric.moreVerb) is associated with better mood \(emoji) for you." }
+            if c < -0.1 { return "\(result.metric.moreVerb) is associated with worse mood \(emoji) for you." }
+            return "No strong link between \(result.metric.shortName.lowercased()) and mood so far \(emoji)."
+        }()
+
+        VStack(spacing: 8) {
+            Text(text)
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.ultraThinMaterial)
+        }
+    }
+
+    // MARK: - Comparison Chart
+
+    @ViewBuilder
+    private var comparisonChart: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Your Numbers")
+                .font(.headline)
+
+            Chart {
+                BarMark(
+                    x: .value("Metric", result.metric.shortName),
+                    y: .value("Value", result.averageMetricValue)
+                )
+                .foregroundStyle(.red.opacity(0.8))
+                .cornerRadius(8)
+                .annotation(position: .top) {
+                    Text(result.formattedValue)
+                        .font(.caption.bold())
+                }
+            }
+            .chartYAxis {
+                AxisMarks { value in
+                    AxisGridLine()
+                    AxisValueLabel {
+                        if let v = value.as(Double.self) {
+                            Text(result.metric.formatValue(v))
+                                .font(.caption2)
+                        }
+                    }
+                }
+            }
+            .frame(height: 180)
+
+            HStack(spacing: 16) {
+                Label {
+                    Text("Avg Mood: \(String(format: "%.1f", result.averageMood)) \(sentimentEmojiFor(Int(result.averageMood.rounded())))")
+                        .font(.caption)
+                } icon: {
+                    Circle()
+                        .fill(sentimentColorFor(Int(result.averageMood.rounded())))
+                        .frame(width: 8, height: 8)
+                }
+
+                Spacer()
+
+                Text("\(period)-day period")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding()
+        .background {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        }
+    }
+
+    // MARK: - Strength
+
+    @ViewBuilder
+    private var strengthSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Correlation Strength")
+                .font(.headline)
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(result.strengthLabel)
+                        .font(.subheadline.bold())
+
+                    Spacer()
+
+                    if result.correlation != nil {
+                        Text(result.isPositive ? "Improves mood" : "Lowers mood")
+                            .font(.caption)
+                            .foregroundStyle(result.isPositive ? .green : .orange)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background {
+                                Capsule()
+                                    .fill(result.isPositive ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
+                            }
+                    }
+                }
+
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.secondary.opacity(0.15))
+                            .frame(height: 10)
+
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [strengthBarColor.opacity(0.6), strengthBarColor],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: geometry.size.width * result.normalizedStrength, height: 10)
+                    }
+                }
+                .frame(height: 10)
+
+                HStack {
+                    Text("Weak")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("Strong")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding()
+        .background {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        }
+    }
+
+    private var strengthBarColor: Color {
+        result.isPositive ? .green : .orange
+    }
+
+    // MARK: - Sample Size
+
+    @ViewBuilder
+    private var sampleSizeSection: some View {
+        HStack {
+            Image(systemName: "info.circle")
+                .foregroundStyle(.secondary)
+
+            if result.correlation != nil {
+                Text("Based on \(result.sampleSize) days of paired data (days with both \(result.metric.shortName.lowercased()) and mood data)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Based on \(result.sampleSize) \(result.sampleSize == 1 ? "day" : "days") of paired data. 3+ days needed for correlation analysis.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.ultraThinMaterial)
+        }
+    }
+}
+
+// MARK: - HealthMetric Convenience
+
+extension HealthCorrelation.HealthMetric {
+    var moreVerb: String {
+        switch self {
+        case .sleep: return "More sleep"
+        case .steps: return "More steps"
+        case .restingHeartRate: return "A higher resting heart rate"
+        case .hrv: return "Higher HRV"
         }
     }
 }

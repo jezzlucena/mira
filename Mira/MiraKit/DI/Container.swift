@@ -91,9 +91,10 @@ public final class DependencyContainer: ObservableObject {
             ) {
                 self.modelContainer = container
                 self.cloudKitState = .connected
-            } else {
-                // Existing local store is incompatible with CloudKit.
-                // Delete it and create a fresh CloudKit-enabled store.
+            } else if UserDefaults.standard.bool(forKey: "storeResetApproved") {
+                // User explicitly approved the store reset — safe to delete.
+                UserDefaults.standard.removeObject(forKey: "storeResetApproved")
+
                 let storeURL = cloudConfig.url
                 let dir = storeURL.deletingLastPathComponent()
                 let storeName = storeURL.deletingPathExtension().lastPathComponent
@@ -102,14 +103,46 @@ public final class DependencyContainer: ObservableObject {
                     try? FileManager.default.removeItem(at: fileURL)
                 }
 
+                if let container = try? ModelContainer(
+                    for: schema,
+                    configurations: [cloudConfig]
+                ) {
+                    self.modelContainer = container
+                    self.cloudKitState = .connected
+                } else {
+                    // Store reset failed — fall back to local-only so we don't crash.
+                    UserDefaults.standard.set(false, forKey: "iCloudSyncEnabled")
+                    let fallbackConfig = ModelConfiguration(
+                        schema: schema,
+                        isStoredInMemoryOnly: false,
+                        allowsSave: true,
+                        cloudKitDatabase: .none
+                    )
+                    self.modelContainer = try! ModelContainer(
+                        for: schema,
+                        configurations: [fallbackConfig]
+                    )
+                    self.cloudKitState = .unavailable
+                }
+            } else {
+                // Existing local store is incompatible with CloudKit.
+                // Fall back to local-only storage to preserve user data.
+                // The UI will prompt the user before any deletion happens.
+                let localConfig = ModelConfiguration(
+                    schema: schema,
+                    isStoredInMemoryOnly: false,
+                    allowsSave: true,
+                    cloudKitDatabase: .none
+                )
+
                 do {
                     self.modelContainer = try ModelContainer(
                         for: schema,
-                        configurations: [cloudConfig]
+                        configurations: [localConfig]
                     )
-                    self.cloudKitState = .connected
+                    self.cloudKitState = .migrationRequired
                 } catch {
-                    fatalError("Failed to create CloudKit ModelContainer after store reset: \(error)")
+                    fatalError("Failed to create fallback ModelContainer: \(error)")
                 }
             }
         } else {
@@ -129,6 +162,19 @@ public final class DependencyContainer: ObservableObject {
                 fatalError("Failed to create ModelContainer: \(error)")
             }
         }
+    }
+
+    /// Approves the store reset required for CloudKit migration.
+    /// The actual deletion happens on the next app launch.
+    public func approveStoreResetForCloudKit() {
+        UserDefaults.standard.set(true, forKey: "storeResetApproved")
+    }
+
+    /// Cancels the pending CloudKit migration and reverts to local-only mode.
+    public func cancelCloudKitMigration() {
+        UserDefaults.standard.set(false, forKey: "iCloudSyncEnabled")
+        UserDefaults.standard.removeObject(forKey: "storeResetApproved")
+        cloudKitState = .off
     }
 
     /// Creates a container for testing with in-memory storage
@@ -170,6 +216,8 @@ public enum CloudKitState {
     case connected
     /// User enabled sync but CloudKit setup failed (container not configured)
     case unavailable
+    /// Local store is incompatible with CloudKit — user must approve reset
+    case migrationRequired
 }
 
 // MARK: - SwiftUI Environment Integration

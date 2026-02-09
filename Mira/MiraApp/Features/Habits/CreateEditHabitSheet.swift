@@ -28,17 +28,32 @@ struct CreateEditHabitSheet: View {
     @State private var isSaving = false
     @State private var showError = false
     @State private var showIconPicker = false
+    @State private var customColor: Color = .blue
 
-    private let colors = [
-        "#007AFF", // Blue
-        "#34C759", // Green
-        "#FF9500", // Orange
-        "#FF2D55", // Pink
-        "#5856D6", // Purple
-        "#AF52DE", // Violet
-        "#00C7BE", // Teal
+    private let presetColors = [
+        // Reds & Warm
         "#FF3B30", // Red
+        "#FF6B6B", // Coral
+        "#FF9500", // Orange
+        "#FFCC00", // Amber
+        "#FFD60A", // Yellow
+        // Greens & Cool
+        "#A8D848", // Lime
+        "#34C759", // Green
+        "#30D158", // Mint
+        "#00C7BE", // Teal
+        "#64D2FF", // Sky
+        // Blues & Purples
+        "#007AFF", // Blue
+        "#5856D6", // Indigo
+        "#AF52DE", // Purple
+        "#BF5AF2", // Violet
+        "#FF2D55", // Pink
+        // Earth & Neutral
+        "#FF6482", // Rose
+        "#A2845E", // Brown
         "#8E8E93", // Gray
+        "#636366", // Graphite
     ]
 
     private let icons = [
@@ -93,7 +108,7 @@ struct CreateEditHabitSheet: View {
                 // Color
                 Section {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
-                        ForEach(colors, id: \.self) { color in
+                        ForEach(presetColors, id: \.self) { color in
                             ColorButton(
                                 color: color,
                                 isSelected: selectedColor == color
@@ -101,8 +116,24 @@ struct CreateEditHabitSheet: View {
                                 selectedColor = color
                             }
                         }
+
+                        // Custom color swatch
+                        CustomColorSwatch(
+                            color: customColor,
+                            isSelected: !presetColors.contains(selectedColor)
+                        ) {
+                            selectedColor = customColor.toHex()
+                        }
                     }
                     .padding(.vertical, 8)
+
+                    // Inline color picker (shown when custom is active)
+                    if !presetColors.contains(selectedColor) {
+                        ColorPicker("Pick a color", selection: $customColor, supportsOpacity: false)
+                            .onChange(of: customColor) { _, newColor in
+                                selectedColor = newColor.toHex()
+                            }
+                    }
                 } header: {
                     Text("Color")
                 }
@@ -178,6 +209,10 @@ struct CreateEditHabitSheet: View {
                     selectedColor = habit.colorHex
                     trackingStyle = habit.trackingStyle
                     isLocalOnly = habit.isLocalOnly
+                    // If editing a habit with a custom color, sync the picker
+                    if !presetColors.contains(habit.colorHex) {
+                        customColor = Color(hex: habit.colorHex)
+                    }
                 }
             }
         }
@@ -255,6 +290,44 @@ private struct ColorButton: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isSelected ? "Selected color" : "Color option")
+    }
+}
+
+// MARK: - Custom Color Swatch
+
+private struct CustomColorSwatch: View {
+    let color: Color
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                Circle()
+                    .fill(
+                        AngularGradient(
+                            colors: [.red, .orange, .yellow, .green, .cyan, .blue, .purple, .red],
+                            center: .center
+                        )
+                    )
+                    .frame(width: 40, height: 40)
+
+                Circle()
+                    .fill(color)
+                    .frame(width: 24, height: 24)
+
+                if isSelected {
+                    Circle()
+                        .strokeBorder(.white, lineWidth: 3)
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "checkmark")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isSelected ? "Selected custom color" : "Custom color picker")
     }
 }
 

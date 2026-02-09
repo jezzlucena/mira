@@ -20,6 +20,8 @@ struct RootView: View {
     @Environment(\.dependencies) private var dependencies
     @State private var hasCompletedOnboarding = false
     @State private var isCheckingOnboarding = true
+    @State private var showMigrationAlert = false
+    @State private var showMigrationRestartAlert = false
 
     var body: some View {
         Group {
@@ -36,6 +38,27 @@ struct RootView: View {
         }
         .task {
             await checkOnboardingStatus()
+        }
+        .onAppear {
+            if dependencies.cloudKitState == .migrationRequired {
+                showMigrationAlert = true
+            }
+        }
+        .alert("iCloud Sync Requires Data Reset", isPresented: $showMigrationAlert) {
+            Button("Cancel — Keep Local Data", role: .cancel) {
+                dependencies.cancelCloudKitMigration()
+            }
+            Button("Erase Local Data & Enable Sync", role: .destructive) {
+                dependencies.approveStoreResetForCloudKit()
+                showMigrationRestartAlert = true
+            }
+        } message: {
+            Text("Your local database is not compatible with iCloud sync. Enabling sync requires erasing local data.\n\nWe strongly recommend exporting your data from Settings first. Tap Cancel to go back and export.")
+        }
+        .alert("Restart Required", isPresented: $showMigrationRestartAlert) {
+            Button("OK") {}
+        } message: {
+            Text("Please restart Mira to complete the iCloud sync setup.")
         }
     }
 

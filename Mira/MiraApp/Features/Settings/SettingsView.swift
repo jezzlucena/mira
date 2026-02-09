@@ -199,6 +199,10 @@ struct SettingsView: View {
                 Label("Unavailable", systemImage: "exclamationmark.icloud.fill")
                     .font(.subheadline)
                     .foregroundStyle(.orange)
+            case .migrationRequired:
+                Label("Migration Required", systemImage: "exclamationmark.icloud.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(.orange)
             case .off:
                 if iCloudSyncEnabled {
                     // Toggle is on but app hasn't restarted yet
