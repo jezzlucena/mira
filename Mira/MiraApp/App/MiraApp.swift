@@ -43,6 +43,7 @@ struct RootView: View {
             if dependencies.cloudKitState == .migrationRequired {
                 showMigrationAlert = true
             }
+            // .subscriptionRequired needs no alert — handled in Settings
         }
         .alert("iCloud Sync Requires Data Reset", isPresented: $showMigrationAlert) {
             Button("Cancel — Keep Local Data", role: .cancel) {

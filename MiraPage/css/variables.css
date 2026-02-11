@@ -1,0 +1,116 @@
+/* ============================================
+   Design Tokens — Mira Landing Page
+   ============================================ */
+
+:root {
+  /* Primary */
+  --color-primary: #6693FC;
+  --color-primary-light: #7AA5FF;
+  --color-primary-dark: #4A7AE8;
+  --gradient-primary: linear-gradient(135deg, #6693FC, #7AA5FF);
+
+  /* Accent */
+  --color-accent: #FF6B6B;
+  --color-accent-light: #FFA07A;
+  --gradient-accent: linear-gradient(135deg, #FF6B6B, #FFA07A);
+
+  /* Sentiment scale (1-6) */
+  --sentiment-1: #8E8E93;
+  --sentiment-2: #AC8E68;
+  --sentiment-3: #A2845E;
+  --sentiment-4: #89AC76;
+  --sentiment-5: #64A86B;
+  --sentiment-6: #34C759;
+
+  /* Surfaces */
+  --color-bg: #FAFBFE;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F2F4F8;
+  --color-glass: rgba(255, 255, 255, 0.72);
+  --color-glass-border: rgba(255, 255, 255, 0.3);
+  --blur-glass: blur(20px);
+
+  /* Text */
+  --color-text: #1A1A2E;
+  --color-text-secondary: #6B7280;
+  --color-text-tertiary: #9CA3AF;
+  --color-text-on-primary: #FFFFFF;
+
+  /* Borders & Shadows */
+  --color-border: #E5E7EB;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.1);
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 2rem;
+  --font-size-4xl: 2.5rem;
+  --font-size-hero: 3.75rem;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.15;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.7;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+  --space-5xl: 8rem;
+
+  /* Layout */
+  --container-max: 1120px;
+  --container-narrow: 720px;
+  --nav-height: 64px;
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+  --border-radius-xl: 24px;
+  --border-radius-full: 9999px;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 200ms;
+  --duration-normal: 400ms;
+  --duration-slow: 600ms;
+}
+
+/* ============================================
+   Dark Mode Overrides
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0F1117;
+    --color-surface: #1A1D28;
+    --color-surface-alt: #242736;
+    --color-glass: rgba(26, 29, 40, 0.78);
+    --color-glass-border: rgba(255, 255, 255, 0.08);
+
+    --color-text: #F0F1F5;
+    --color-text-secondary: #9CA3AF;
+    --color-text-tertiary: #6B7280;
+
+    --color-border: #2D3040;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+}

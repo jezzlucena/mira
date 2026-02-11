@@ -1,0 +1,107 @@
+/* ============================================
+   Layout — Mira Landing Page
+   ============================================ */
+
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+
+.container--narrow {
+  max-width: var(--container-narrow);
+}
+
+section {
+  padding: var(--space-5xl) 0;
+}
+
+/* ============================================
+   Grid
+   ============================================ */
+
+.grid {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.grid--2 { grid-template-columns: 1fr; }
+.grid--3 { grid-template-columns: 1fr; }
+
+/* ============================================
+   Responsive Breakpoints (mobile-first)
+   ============================================ */
+
+/* Tablet: 640px+ */
+@media (min-width: 640px) {
+  .grid--2 { grid-template-columns: repeat(2, 1fr); }
+  .grid--3 { grid-template-columns: repeat(2, 1fr); }
+
+  section {
+    padding: var(--space-5xl) 0;
+  }
+}
+
+/* Desktop: 1024px+ */
+@media (min-width: 1024px) {
+  .grid--3 { grid-template-columns: repeat(3, 1fr); }
+
+  .container {
+    padding: 0 var(--space-2xl);
+  }
+}
+
+/* ============================================
+   Feature Alternating Layout
+   ============================================ */
+
+.feature-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xl);
+}
+
+.feature-row__text {
+  flex: 1;
+}
+
+.feature-row__visual {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .feature-row {
+    flex-direction: row;
+    gap: var(--space-4xl);
+  }
+
+  .feature-row--reverse {
+    flex-direction: row-reverse;
+  }
+}
+
+/* ============================================
+   Two-Panel Split
+   ============================================ */
+
+.split {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+}
+
+@media (min-width: 768px) {
+  .split {
+    flex-direction: row;
+    gap: var(--space-2xl);
+  }
+
+  .split > * {
+    flex: 1;
+  }
+}

@@ -18,9 +18,15 @@ struct OnboardingView: View {
                         .tag(index)
                 }
 
+                // Subscription page
+                SubscriptionView(onSkip: {
+                    withAnimation { currentPage = pages.count + 1 }
+                })
+                .tag(pages.count)
+
                 // Final page: Create first habit
                 CreateFirstHabitView(onComplete: completeOnboarding)
-                    .tag(pages.count)
+                    .tag(pages.count + 1)
             }
             #if os(iOS)
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -31,7 +37,7 @@ struct OnboardingView: View {
             VStack(spacing: 20) {
                 PageIndicator(
                     currentPage: currentPage,
-                    totalPages: pages.count + 1
+                    totalPages: pages.count + 2
                 )
 
                 if currentPage < pages.count {

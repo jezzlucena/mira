@@ -1,4 +1,5 @@
 import LocalAuthentication
+import StoreKit
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
@@ -6,6 +7,7 @@ import UniformTypeIdentifiers
 /// Settings screen for privacy, accessibility, and data management
 struct SettingsView: View {
     @Environment(\.dependencies) private var dependencies
+    @EnvironmentObject private var subscriptionService: SubscriptionService
     @State private var preferences: UserPreferences?
     @State private var showExportSheet = false
     @State private var showImportSheet = false
@@ -17,6 +19,7 @@ struct SettingsView: View {
     @State private var showError = false
     @State private var iCloudSyncEnabled: Bool = UserDefaults.standard.bool(forKey: "iCloudSyncEnabled")
     @State private var showSyncRestartAlert = false
+    @State private var showManageSubscriptions = false
 
     var body: some View {
         NavigationStack {
@@ -29,6 +32,9 @@ struct SettingsView: View {
 
                 // HealthKit
                 healthKitSection
+
+                // Premium
+                premiumSection
 
                 // Data
                 dataSection
@@ -141,21 +147,62 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Data Section
+    // MARK: - Premium Section
 
     @ViewBuilder
-    private var dataSection: some View {
+    private var premiumSection: some View {
         Section {
+            // Subscription status
+            HStack {
+                Label("Subscription", systemImage: "crown.fill")
+                Spacer()
+                Text(subscriptionService.isPremium ? "Active" : "Free")
+                    .foregroundStyle(subscriptionService.isPremium ? .green : .secondary)
+            }
+
+            if subscriptionService.isPremium {
+                Button("Manage Subscription") {
+                    showManageSubscriptions = true
+                }
+            } else {
+                NavigationLink {
+                    SubscriptionView()
+                } label: {
+                    Label("Upgrade to Premium", systemImage: "star.fill")
+                        .foregroundStyle(.yellow)
+                }
+            }
+
+            // iCloud Sync toggle — disabled when not premium
             Toggle(isOn: $iCloudSyncEnabled) {
                 Label("Sync to iCloud", systemImage: "icloud")
             }
+            .disabled(!subscriptionService.isPremium)
             .onChange(of: iCloudSyncEnabled) { _, newValue in
                 UserDefaults.standard.set(newValue, forKey: "iCloudSyncEnabled")
                 showSyncRestartAlert = true
             }
 
-            iCloudStatusRow
+            if subscriptionService.isPremium {
+                iCloudStatusRow
+            }
+        } header: {
+            Label("Mira Premium", systemImage: "crown")
+        } footer: {
+            if !subscriptionService.isPremium {
+                Text("Subscribe to Mira Premium to unlock iCloud Sync and Apple Watch support.")
+            } else if iCloudSyncEnabled {
+                Text("Your habits and entries sync across iPhone and Apple Watch via iCloud.")
+            }
+        }
+        .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
+    }
 
+    // MARK: - Data Section
+
+    @ViewBuilder
+    private var dataSection: some View {
+        Section {
             Button {
                 exportData()
             } label: {
@@ -176,11 +223,7 @@ struct SettingsView: View {
         } header: {
             Label("Data Management", systemImage: "externaldrive")
         } footer: {
-            if iCloudSyncEnabled {
-                Text("Your habits and entries sync across iPhone and Apple Watch via iCloud.")
-            } else {
-                Text("Enable iCloud to sync data across your devices. Export as JSON for manual backup.")
-            }
+            Text("Export as JSON for manual backup.")
         }
     }
 
@@ -203,9 +246,12 @@ struct SettingsView: View {
                 Label("Migration Required", systemImage: "exclamationmark.icloud.fill")
                     .font(.subheadline)
                     .foregroundStyle(.orange)
+            case .subscriptionRequired:
+                Label("Premium Required", systemImage: "crown.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(.orange)
             case .off:
                 if iCloudSyncEnabled {
-                    // Toggle is on but app hasn't restarted yet
                     Label("Restart Required", systemImage: "arrow.clockwise.icloud.fill")
                         .font(.subheadline)
                         .foregroundStyle(.orange)

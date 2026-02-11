@@ -17,6 +17,8 @@ struct QuickLogSheet: View {
     @State private var entryDate = Date()
     @State private var isSaving = false
     @State private var showError = false
+    @State private var showZeroValueAlert = false
+    @State private var sheetDetent: PresentationDetent = .medium
 
     private enum LogStep {
         case selectHabit
@@ -49,8 +51,23 @@ struct QuickLogSheet: View {
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
+                    switch step {
+                    case .selectHabit:
+                        Button("Cancel") {
+                            dismiss()
+                        }
+                    case .selectSentiment:
+                        Button("Back") {
+                            withAnimation {
+                                step = .selectHabit
+                            }
+                        }
+                    case .addDetails:
+                        Button("Back") {
+                            withAnimation {
+                                step = .selectSentiment
+                            }
+                        }
                     }
                 }
 
@@ -68,11 +85,23 @@ struct QuickLogSheet: View {
             } message: {
                 Text("Failed to save entry. Please try again.")
             }
+            .alert("Invalid Value", isPresented: $showZeroValueAlert) {
+                Button("OK") {}
+            } message: {
+                Text("Please enter a duration or quantity greater than zero.")
+            }
+            .presentationDetents([.medium, .large], selection: $sheetDetent)
+            .onChange(of: step) { _, newStep in
+                withAnimation {
+                    sheetDetent = newStep == .addDetails ? .large : .medium
+                }
+            }
             .task {
                 await loadHabits()
                 // If habit was pre-selected, skip to sentiment
                 if let habit = habit {
                     selectedHabit = habit
+                    setDefaultValue(for: habit)
                     step = .selectSentiment
                 }
             }
@@ -123,6 +152,7 @@ struct QuickLogSheet: View {
                             isSelected: selectedHabit?.id == habit.id
                         ) {
                             selectedHabit = habit
+                            setDefaultValue(for: habit)
                             withAnimation {
                                 step = .selectSentiment
                             }
@@ -176,10 +206,6 @@ struct QuickLogSheet: View {
                 }
             }
 
-            // Value input for duration/quantity habits
-            if let habit = selectedHabit, habit.trackingStyle != .occurrence {
-                valueInputView(for: habit)
-            }
         }
     }
 
@@ -274,6 +300,11 @@ struct QuickLogSheet: View {
                     .fill(.ultraThinMaterial)
             }
 
+            // Value input for duration/quantity habits
+            if let habit = selectedHabit, habit.trackingStyle != .occurrence {
+                valueInputView(for: habit)
+            }
+
             // Optional note
             VStack(alignment: .leading, spacing: 8) {
                 Text("Add a note (optional)")
@@ -321,6 +352,17 @@ struct QuickLogSheet: View {
         }
     }
 
+    private func setDefaultValue(for habit: Habit) {
+        switch habit.trackingStyle {
+        case .duration:
+            value = 30.0
+        case .quantity:
+            value = 1.0
+        case .occurrence:
+            break
+        }
+    }
+
     private func loadHabits() async {
         do {
             habits = try dependencies.habitRepository.fetchAll()
@@ -331,6 +373,13 @@ struct QuickLogSheet: View {
 
     private func saveEntry() {
         guard let sentiment = selectedSentiment else { return }
+
+        if let habit = selectedHabit,
+           habit.trackingStyle == .duration || habit.trackingStyle == .quantity,
+           (value ?? 0) <= 0 {
+            showZeroValueAlert = true
+            return
+        }
 
         isSaving = true
 

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mira — The Mirror, Not the Judge</title>
+  <meta name="description" content="Track any habit without shame. Correlate what you do with how you feel. No streaks. No guilt. Just awareness. Free forever.">
+  <meta name="theme-color" content="#6693FC">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Mira — Habit Tracking, Reimagined">
+  <meta property="og:description" content="Track any habit without shame. Correlate what you do with how you feel. No streaks. No guilt. Just awareness.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/images/app-icon.png">
+
+  <link rel="icon" type="image/png" href="assets/images/app-icon.png">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+  <!-- ========== Nav ========== -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav__inner">
+      <a href="#" class="nav__brand" aria-label="Mira home">
+        <img src="assets/images/app-icon.png" alt="" width="32" height="32">
+        Mira
+      </a>
+
+      <div class="nav__links">
+        <a href="#features">Features</a>
+        <a href="#compare">Compare</a>
+        <a href="#pricing">Pricing</a>
+      </div>
+
+      <a href="#" class="btn btn--primary btn--sm nav__cta">Download</a>
+
+      <button class="nav__hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+
+    <div class="nav__mobile-menu" role="menu">
+      <a href="#features" role="menuitem">Features</a>
+      <a href="#compare" role="menuitem">Compare</a>
+      <a href="#pricing" role="menuitem">Pricing</a>
+      <a href="#" class="btn btn--primary btn--sm" role="menuitem">Download</a>
+    </div>
+  </nav>
+
+  <!-- ========== Hero ========== -->
+  <section class="hero" id="hero" aria-label="Hero">
+    <div class="floating-emojis" aria-hidden="true">
+      <span class="floating-emoji">😞</span>
+      <span class="floating-emoji">😔</span>
+      <span class="floating-emoji">😕</span>
+      <span class="floating-emoji">🙂</span>
+      <span class="floating-emoji">😊</span>
+      <span class="floating-emoji">😄</span>
+    </div>
+    <div class="blob blob--1" aria-hidden="true"></div>
+    <div class="blob blob--2" aria-hidden="true"></div>
+    <div class="blob blob--3" aria-hidden="true"></div>
+
+    <div class="container hero__container">
+      <div class="hero__text">
+        <span class="hero__overline">Habit Tracking, Reimagined</span>
+        <h1 class="hero__heading">The Mirror,<br>Not the <span class="text-gradient">Judge.</span></h1>
+        <p class="hero__subtitle">Track any habit without shame. Correlate what you do with how you feel. No&nbsp;streaks. No&nbsp;guilt. Just&nbsp;awareness.</p>
+        <div class="hero__actions">
+          <a href="#" class="btn btn--primary btn--lg hero__download" aria-label="Download on the App Store">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            App Store
+          </a>
+        </div>
+        <p class="hero__free-note">Free forever. All features included.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Philosophy ========== -->
+  <section class="philosophy" id="philosophy" aria-label="Our philosophy">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-header__overline">Philosophy</span>
+        <h2 class="section-header__title">Built Different</h2>
+      </div>
+
+      <div class="grid grid--3 reveal-stagger">
+        <div class="card">
+          <div class="card__icon" aria-hidden="true">🚫</div>
+          <h3 class="card__title">No Streaks</h3>
+          <p class="card__body">A missed day is not a failure. It's a data point.</p>
+        </div>
+        <div class="card">
+          <div class="card__icon" aria-hidden="true">⚖️</div>
+          <h3 class="card__title">No Judgment</h3>
+          <p class="card__body">Track smoking or meditation with the same neutrality.</p>
+        </div>
+        <div class="card">
+          <div class="card__icon" aria-hidden="true">🪞</div>
+          <h3 class="card__title">Mood in Context</h3>
+          <p class="card__body">Every log includes a feeling (1–6). See the link between what you do and how you feel.</p>
+        </div>
+      </div>
+
+      <p class="pull-quote reveal">"We do not fix you. We hand you the flashlight so you can see where you are standing."</p>
+    </div>
+  </section>
+
+  <!-- ========== Features ========== -->
+  <section class="features" id="features" aria-label="Features">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-header__overline">Features</span>
+        <h2 class="section-header__title">Everything You Need</h2>
+      </div>
+
+      <!-- Feature 1: Correlation -->
+      <div class="feature-row reveal--left">
+        <div class="feature-row__text">
+          <h3>Mood–Habit Correlation</h3>
+          <p>Mira uses Pearson correlation to find real links between what you do and how you feel. Not guesses — math.</p>
+        </div>
+        <div class="feature-row__visual">
+          <div style="width:100%;max-width:320px">
+            <div style="display:flex;justify-content:space-between;font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-bottom:var(--space-sm)">
+              <span>Exercise → Mood</span>
+              <span>r = 0.78</span>
+            </div>
+            <div class="correlation-bar">
+              <div class="correlation-bar__fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 2: Free analytics -->
+      <div class="feature-row feature-row--reverse reveal--right">
+        <div class="feature-row__text">
+          <h3>Full Analytics, Free Forever</h3>
+          <p>Mood trends, day-of-week patterns, natural language insights. Most apps lock this behind a paywall. Mira gives it to everyone.</p>
+        </div>
+        <div class="feature-row__visual">
+          <div style="display:flex;gap:var(--space-sm);align-items:flex-end;height:120px">
+            <div style="width:32px;background:var(--gradient-primary);border-radius:6px 6px 0 0;height:40%"></div>
+            <div style="width:32px;background:var(--gradient-primary);border-radius:6px 6px 0 0;height:55%"></div>
+            <div style="width:32px;background:var(--gradient-primary);border-radius:6px 6px 0 0;height:70%"></div>
+            <div style="width:32px;background:var(--gradient-primary);border-radius:6px 6px 0 0;height:60%"></div>
+            <div style="width:32px;background:var(--gradient-primary);border-radius:6px 6px 0 0;height:85%"></div>
+            <div style="width:32px;background:var(--gradient-primary);border-radius:6px 6px 0 0;height:90%"></div>
+            <div style="width:32px;background:var(--gradient-primary);border-radius:6px 6px 0 0;height:75%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 3: Quick Logging -->
+      <div class="feature-row reveal--left">
+        <div class="feature-row__text">
+          <h3>Quick Logging</h3>
+          <p>Log any habit in under 5 seconds. Tap a habit, pick a feeling, done.</p>
+        </div>
+        <div class="feature-row__visual">
+          <div class="sentiment-demo" aria-label="Sentiment picker demo showing 6 mood levels">
+            <span class="sentiment-demo__face" aria-label="Very low mood">😞</span>
+            <span class="sentiment-demo__face" aria-label="Low mood">😔</span>
+            <span class="sentiment-demo__face" aria-label="Slightly low mood">😕</span>
+            <span class="sentiment-demo__face" aria-label="Slightly good mood">🙂</span>
+            <span class="sentiment-demo__face" aria-label="Good mood">😊</span>
+            <span class="sentiment-demo__face" aria-label="Great mood">😄</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 4: Privacy -->
+      <div class="feature-row feature-row--reverse reveal--right">
+        <div class="feature-row__text">
+          <h3>Privacy First</h3>
+          <p>All data stays on your device. No analytics. No ads. No third-party SDKs. Your habits are your business.</p>
+        </div>
+        <div class="feature-row__visual">
+          <div class="shield-icon" aria-hidden="true">🛡️</div>
+        </div>
+      </div>
+
+      <!-- Feature 5: HealthKit -->
+      <div class="feature-row reveal--left">
+        <div class="feature-row__text">
+          <h3>HealthKit Integration</h3>
+          <p>Correlate sleep, steps, heart rate, and HRV with your mood. See the full picture of your well-being.</p>
+        </div>
+        <div class="feature-row__visual">
+          <div style="display:flex;gap:var(--space-lg);font-size:2rem" aria-hidden="true">
+            <span>🫀</span><span>👟</span><span>😴</span><span>📈</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Comparison ========== -->
+  <section class="comparison" id="compare" aria-label="Comparison with other apps">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-header__overline">Compare</span>
+        <h2 class="section-header__title">See How Mira Stacks Up</h2>
+        <p class="section-header__subtitle">What you get for free — no trial, no limits, no catches.</p>
+      </div>
+
+      <div class="comparison-table-wrapper reveal--scale">
+        <table class="comparison-table" role="table">
+          <thead>
+            <tr>
+              <th scope="col">Feature</th>
+              <th scope="col" class="col-mira">
+                Mira Free
+                <br><span class="badge" style="margin-top:4px;display:inline-block">Best Value</span>
+              </th>
+              <th scope="col">Daylio Free</th>
+              <th scope="col">Bearable Free</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Habit Tracking</td>
+              <td class="col-mira check">&#10003; Full</td>
+              <td class="check">&#10003; Basic</td>
+              <td class="partial">~ Limited</td>
+            </tr>
+            <tr>
+              <td>Mood Logging</td>
+              <td class="col-mira check">&#10003; Full (1–6)</td>
+              <td class="check">&#10003; Full</td>
+              <td class="check">&#10003; Full</td>
+            </tr>
+            <tr>
+              <td>Habit–Mood Correlation</td>
+              <td class="col-mira check">&#10003; Built-in</td>
+              <td class="cross">&#10007; No</td>
+              <td class="partial">~ Limited</td>
+            </tr>
+            <tr>
+              <td>Analytics &amp; Insights</td>
+              <td class="col-mira check">&#10003; Full</td>
+              <td class="cross">&#10007; Premium ($4.99/mo)</td>
+              <td class="partial">~ 30-day limit</td>
+            </tr>
+            <tr>
+              <td>Data Export</td>
+              <td class="col-mira check">&#10003; Full</td>
+              <td class="cross">&#10007; Premium</td>
+              <td class="partial">~ Limited</td>
+            </tr>
+            <tr>
+              <td>HealthKit</td>
+              <td class="col-mira check">&#10003; Full</td>
+              <td class="cross">&#10007; No</td>
+              <td class="partial">~ Limited</td>
+            </tr>
+            <tr>
+              <td>Ad-Free</td>
+              <td class="col-mira check">&#10003; Yes</td>
+              <td class="cross">&#10007; No</td>
+              <td class="check">&#10003; Yes</td>
+            </tr>
+            <tr>
+              <td>iCloud Sync</td>
+              <td class="col-mira">Premium</td>
+              <td>Premium</td>
+              <td>Premium</td>
+            </tr>
+            <tr>
+              <td>Apple Watch</td>
+              <td class="col-mira">Premium</td>
+              <td class="cross">&#10007; No</td>
+              <td class="cross">&#10007; No</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Pricing ========== -->
+  <section class="pricing-section" id="pricing" aria-label="Pricing">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-header__overline">Pricing</span>
+        <h2 class="section-header__title">Free Forever. Seriously.</h2>
+        <p class="section-header__subtitle">Premium only adds sync infrastructure. Everything else is already yours.</p>
+      </div>
+
+      <div class="split reveal-stagger">
+        <!-- Free tier -->
+        <div class="card" style="border:2px solid var(--sentiment-6)">
+          <h3 style="margin-bottom:var(--space-md)">Free Forever</h3>
+          <ul style="list-style:none;padding:0">
+            <li style="padding:var(--space-sm) 0;font-size:var(--font-size-sm);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-sm)"><span style="color:var(--sentiment-6);font-weight:700">&#10003;</span> Unlimited habits</li>
+            <li style="padding:var(--space-sm) 0;font-size:var(--font-size-sm);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-sm)"><span style="color:var(--sentiment-6);font-weight:700">&#10003;</span> Mood logging (1–6 scale)</li>
+            <li style="padding:var(--space-sm) 0;font-size:var(--font-size-sm);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-sm)"><span style="color:var(--sentiment-6);font-weight:700">&#10003;</span> ALL analytics &amp; insights</li>
+            <li style="padding:var(--space-sm) 0;font-size:var(--font-size-sm);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-sm)"><span style="color:var(--sentiment-6);font-weight:700">&#10003;</span> Export &amp; import</li>
+            <li style="padding:var(--space-sm) 0;font-size:var(--font-size-sm);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-sm)"><span style="color:var(--sentiment-6);font-weight:700">&#10003;</span> HealthKit integration</li>
+            <li style="padding:var(--space-sm) 0;font-size:var(--font-size-sm);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-sm)"><span style="color:var(--sentiment-6);font-weight:700">&#10003;</span> Accessibility features</li>
+            <li style="padding:var(--space-sm) 0;font-size:var(--font-size-sm);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-sm)"><span style="color:var(--sentiment-6);font-weight:700">&#10003;</span> Privacy controls</li>
+            <li style="padding:var(--space-sm) 0;font-size:var(--font-size-sm);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-sm)"><span style="color:var(--sentiment-6);font-weight:700">&#10003;</span> Ad-free, always</li>
+          </ul>
+        </div>
+
+        <!-- Premium tier -->
+        <div class="card" style="border:2px solid var(--color-primary)">
+          <div style="display:flex;align-items:center;gap:var(--space-sm);margin-bottom:var(--space-md)">
+            <h3>Premium</h3>
+            <span class="badge">$1.99/mo</span>
+          </div>
+          <ul style="list-style:none;padding:0;margin-bottom:var(--space-lg)">
+            <li style="padding:var(--space-sm) 0;font-size:var(--font-size-sm);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-sm)"><span style="color:var(--color-primary);font-weight:700">&#10003;</span> iCloud Sync across devices</li>
+            <li style="padding:var(--space-sm) 0;font-size:var(--font-size-sm);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-sm)"><span style="color:var(--color-primary);font-weight:700">&#10003;</span> Apple Watch app</li>
+          </ul>
+          <p style="font-size:var(--font-size-sm);color:var(--color-text-tertiary);font-style:italic">That's it. Everything else is free.</p>
+        </div>
+      </div>
+
+      <p class="reveal" style="text-align:center;max-width:560px;margin:var(--space-2xl) auto 0;font-size:var(--font-size-sm);color:var(--color-text-tertiary)">Why so cheap? We believe self-knowledge shouldn't be paywalled. Premium only covers sync infrastructure costs.</p>
+
+      <!-- Pricing cards with toggle -->
+      <div style="margin-top:var(--space-3xl)">
+        <div class="pricing-toggle reveal">
+          <span class="pricing-toggle__label is-active" data-toggle="monthly">Monthly</span>
+          <button class="pricing-toggle__switch" aria-label="Toggle between monthly and yearly pricing" role="switch" aria-checked="false"></button>
+          <span class="pricing-toggle__label" data-toggle="yearly">Yearly</span>
+        </div>
+
+        <div class="split reveal-stagger" style="max-width:640px;margin:0 auto">
+          <div class="pricing-card pricing-card--featured">
+            <div class="pricing-card__name">Premium</div>
+            <div class="pricing-card__price" data-price>$1.99</div>
+            <div class="pricing-card__period" data-period>/month</div>
+            <span class="badge badge--accent" data-save-badge style="opacity:0;transition:opacity var(--duration-fast)">Save 25%</span>
+            <div style="margin-top:var(--space-md)">
+              <a href="#" class="btn btn--primary" style="width:100%">Start Free Trial</a>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:var(--space-sm)">
+            <p style="font-size:var(--font-size-sm);color:var(--color-text-tertiary)">Compare to competitors:</p>
+            <p style="font-size:var(--font-size-sm);color:var(--color-text-secondary)">Daylio <strong>$4.99/mo</strong></p>
+            <p style="font-size:var(--font-size-sm);color:var(--color-text-secondary)">Bearable <strong>$6.99/mo</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Footer ========== -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer__inner">
+        <div>
+          <div class="footer__brand">
+            <img src="assets/images/app-icon.png" alt="" width="28" height="28">
+            Mira
+          </div>
+          <p class="footer__tagline">The mirror, not the judge.</p>
+        </div>
+
+        <div class="footer__links">
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="terms.html">Terms &amp; Conditions</a>
+        </div>
+
+        <div style="text-align:center">
+          <a href="#" class="btn btn--primary btn--sm" style="margin-bottom:var(--space-sm)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            Download
+          </a>
+          <p class="footer__bottom">Requires iOS 17.0+ | watchOS 11.0+</p>
+        </div>
+
+        <p class="footer__bottom" style="width:100%;text-align:center">&copy; 2026 Jezz Lucena. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

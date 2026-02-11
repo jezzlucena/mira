@@ -54,7 +54,6 @@ struct DashboardView: View {
                         Task { await loadData() }
                     }
                 )
-                .presentationDetents([.medium, .large])
             }
             .sheet(item: $selectedEntryForEdit) { entry in
                 if let habit = entry.habit {

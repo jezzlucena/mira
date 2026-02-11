@@ -60,7 +60,6 @@
 		D1E73BDE2F36DFE500CA16B2 /* Exceptions for "MiraWatch Watch App" folder in "MiraWatch Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"MiraWatch-Watch-App-Info.plist",
 				Resources/Assets.xcassets,
 			);
 			target = D1E73BCE2F36DFD300CA16B2 /* MiraWatch Watch App */;
@@ -83,6 +82,7 @@
 				MiraKit/Services/ExportService.swift,
 				MiraKit/Services/HabitService.swift,
 				MiraKit/Services/HealthKitManager.swift,
+				MiraKit/Services/SubscriptionService.swift,
 			);
 			target = D1E73BCE2F36DFD300CA16B2 /* MiraWatch Watch App */;
 		};

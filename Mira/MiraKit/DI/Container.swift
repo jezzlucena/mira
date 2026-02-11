@@ -41,6 +41,10 @@ public final class DependencyContainer: ObservableObject {
     }()
     #endif
 
+    public lazy var subscriptionService: SubscriptionService = {
+        SubscriptionService()
+    }()
+
     // MARK: - Repositories
 
     public lazy var habitRepository: HabitRepository = {
@@ -69,12 +73,13 @@ public final class DependencyContainer: ObservableObject {
             UserPreferences.self
         ])
 
-        // watchOS always uses CloudKit (depends on iPhone data).
-        // iOS reads the user preference.
+        // watchOS always uses CloudKit (depends on iPhone data) if premium.
+        // iOS reads the user preference, gated on premium subscription.
         #if os(watchOS)
-        let wantsCloudKit = true
+        let wantsCloudKit = SubscriptionService.cachedIsPremium
         #else
-        let wantsCloudKit = UserDefaults.standard.bool(forKey: "iCloudSyncEnabled")
+        let iCloudSyncEnabled = UserDefaults.standard.bool(forKey: "iCloudSyncEnabled")
+        let wantsCloudKit = iCloudSyncEnabled && SubscriptionService.cachedIsPremium
         #endif
 
         if wantsCloudKit {
@@ -157,7 +162,17 @@ public final class DependencyContainer: ObservableObject {
                     for: schema,
                     configurations: [localConfig]
                 )
+
+                #if !os(watchOS)
+                // User wants sync but isn't premium
+                if iCloudSyncEnabled && !SubscriptionService.cachedIsPremium {
+                    self.cloudKitState = .subscriptionRequired
+                } else {
+                    self.cloudKitState = .off
+                }
+                #else
                 self.cloudKitState = .off
+                #endif
             } catch {
                 fatalError("Failed to create ModelContainer: \(error)")
             }
@@ -218,6 +233,8 @@ public enum CloudKitState {
     case unavailable
     /// Local store is incompatible with CloudKit — user must approve reset
     case migrationRequired
+    /// User enabled sync but does not have a premium subscription
+    case subscriptionRequired
 }
 
 // MARK: - SwiftUI Environment Integration
@@ -239,6 +256,7 @@ extension View {
     public func withDependencies(_ container: DependencyContainer) -> some View {
         self
             .environment(\.dependencies, container)
+            .environmentObject(container.subscriptionService)
             .modelContainer(container.modelContainer)
     }
 }
