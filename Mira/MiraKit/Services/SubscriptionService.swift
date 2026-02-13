@@ -103,12 +103,10 @@ public final class SubscriptionService: ObservableObject {
         }
     }
 
-    public func restorePurchases() async {
-        do {
-            try await AppStore.sync()
-        } catch {
-            print("Failed to sync with App Store: \(error)")
-        }
+    /// Syncs with the App Store and refreshes subscription status.
+    /// Throws if the App Store sync fails.
+    public func restorePurchases() async throws {
+        try await AppStore.sync()
         await refreshSubscriptionStatus()
     }
 

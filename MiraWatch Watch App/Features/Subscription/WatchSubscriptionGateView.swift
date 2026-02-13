@@ -5,6 +5,7 @@ import StoreKit
 struct WatchSubscriptionGateView: View {
     @EnvironmentObject var subscriptionService: SubscriptionService
     @State private var isRestoring = false
+    @State private var showNoSubscriptionAlert = false
 
     var body: some View {
         ContentUnavailableView {
@@ -17,6 +18,9 @@ struct WatchSubscriptionGateView: View {
                 Task {
                     await subscriptionService.restorePurchases()
                     isRestoring = false
+                    if !subscriptionService.isPremium {
+                        showNoSubscriptionAlert = true
+                    }
                 }
             } label: {
                 if isRestoring {
@@ -26,6 +30,11 @@ struct WatchSubscriptionGateView: View {
                 }
             }
             .disabled(isRestoring)
+        }
+        .alert("No Subscription Found", isPresented: $showNoSubscriptionAlert) {
+            Button("OK") {}
+        } message: {
+            Text("No active subscription was found. Please subscribe on your iPhone to get started.")
         }
     }
 }
