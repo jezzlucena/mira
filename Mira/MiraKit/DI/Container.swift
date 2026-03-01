@@ -73,10 +73,10 @@ public final class DependencyContainer: ObservableObject {
             UserPreferences.self
         ])
 
-        // watchOS always uses CloudKit (depends on iPhone data) if premium.
+        // watchOS always uses CloudKit to sync with the iPhone.
         // iOS reads the user preference, gated on premium subscription.
         #if os(watchOS)
-        let wantsCloudKit = SubscriptionService.cachedIsPremium
+        let wantsCloudKit = true
         #else
         let iCloudSyncEnabled = UserDefaults.standard.bool(forKey: "iCloudSyncEnabled")
         let wantsCloudKit = iCloudSyncEnabled && SubscriptionService.cachedIsPremium

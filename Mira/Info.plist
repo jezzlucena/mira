@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Mira reads your health data (heart rate, steps, and sleep) to help you discover correlations with your daily habits.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Mira does not write health data but requires this permission as part of HealthKit integration.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

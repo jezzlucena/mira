@@ -22,7 +22,7 @@ struct WatchHabitListView: View {
                     ContentUnavailableView {
                         Label("No Habits", systemImage: "list.bullet")
                     } description: {
-                        Text("Create habits on your iPhone to get started.")
+                        Text("Please make sure iCloud Sync is enabled on your iOS app.")
                     }
                 } else {
                     List {

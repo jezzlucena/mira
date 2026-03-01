@@ -90,7 +90,7 @@
   },
   "subscriptionGroups" : [
     {
-      "id" : "mira_premium",
+      "id" : "21926564",
       "localizations" : [
         {
           "description" : "Unlock iCloud Sync and Apple Watch support",
@@ -122,7 +122,7 @@
           "productID" : "com.jezzlucena.mira.premium.monthly",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Monthly",
-          "subscriptionGroupID" : "mira_premium",
+          "subscriptionGroupID" : "21926564",
           "type" : "RecurringSubscription"
         },
         {
@@ -147,7 +147,7 @@
           "productID" : "com.jezzlucena.mira.premium.yearly",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Yearly",
-          "subscriptionGroupID" : "mira_premium",
+          "subscriptionGroupID" : "21926564",
           "type" : "RecurringSubscription"
         }
       ]

@@ -36,6 +36,13 @@ struct SubscriptionView: View {
             }
             .padding()
         }
+        .onChange(of: service.products) { _, products in
+            if selectedProduct == nil, let yearly = service.yearlyProduct {
+                selectedProduct = yearly
+            } else if selectedProduct == nil, let monthly = service.monthlyProduct {
+                selectedProduct = monthly
+            }
+        }
         .onChange(of: service.isPremium) { _, isPremium in
             if isPremium {
                 onSkip?()
@@ -162,6 +169,18 @@ struct SubscriptionView: View {
         if service.isLoading {
             ProgressView()
                 .padding()
+        } else if service.products.isEmpty {
+            VStack(spacing: 12) {
+                Text("Unable to load subscription plans.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                Button("Try Again") {
+                    Task { await service.loadProducts() }
+                }
+                .font(.subheadline)
+            }
+            .padding()
         } else {
             VStack(spacing: 12) {
                 if let monthly = service.monthlyProduct {
@@ -248,7 +267,12 @@ struct SubscriptionView: View {
 
             Button("Restore Purchases") {
                 Task {
-                    await service.restorePurchases()
+                    do {
+                        try await service.restorePurchases()
+                    } catch {
+                        errorMessage = "Could not connect to the App Store. Please try again."
+                        showError = true
+                    }
                 }
             }
             .font(.footnote)

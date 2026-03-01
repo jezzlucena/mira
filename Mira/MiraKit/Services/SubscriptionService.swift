@@ -72,12 +72,13 @@ public final class SubscriptionService: ObservableObject {
 
         do {
             let storeProducts = try await Product.products(for: Self.allProductIDs)
+            print("[SubscriptionService] Loaded \(storeProducts.count) products: \(storeProducts.map(\.id))")
             // Sort: monthly first, then yearly
             products = storeProducts.sorted { a, _ in
                 a.id == Self.monthlyProductID
             }
         } catch {
-            print("Failed to load products: \(error)")
+            print("[SubscriptionService] Failed to load products: \(error)")
         }
     }
 

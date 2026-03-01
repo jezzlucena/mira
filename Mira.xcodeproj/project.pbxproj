@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		54FF993F2F53D94600A01C34 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54FF993E2F53D94600A01C34 /* StoreKit.framework */; };
 		D1E73BD92F36DFD400CA16B2 /* MiraWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = D1E73BCF2F36DFD300CA16B2 /* MiraWatch Watch App.app */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -35,6 +36,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		54FF993E2F53D94600A01C34 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		D1E73BCF2F36DFD300CA16B2 /* MiraWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MiraWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D1E83FFF2F35C3500006CA09 /* Mira.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mira.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -132,17 +134,27 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				54FF993F2F53D94600A01C34 /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		54FF993D2F53D94600A01C34 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				54FF993E2F53D94600A01C34 /* StoreKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		D1E83FF62F35C34F0006CA09 = {
 			isa = PBXGroup;
 			children = (
 				D1E840012F35C3500006CA09 /* Mira */,
 				D1E73BD02F36DFD300CA16B2 /* MiraWatch Watch App */,
+				54FF993D2F53D94600A01C34 /* Frameworks */,
 				D1E840002F35C3500006CA09 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -495,7 +507,8 @@
 				INFOPLIST_FILE = Mira/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Mira;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "We *never* share your data.";
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Mira uses your Health info to make correlations between your moods, your habits, and your health stats.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Mira reads your health data (heart rate, steps, and sleep) to help you discover correlations with your daily habits.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -546,7 +559,8 @@
 				INFOPLIST_FILE = Mira/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Mira;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "We *never* share your data.";
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Mira uses your Health info to make correlations between your moods, your habits, and your health stats.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Mira reads your health data (heart rate, steps, and sleep) to help you discover correlations with your daily habits.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
